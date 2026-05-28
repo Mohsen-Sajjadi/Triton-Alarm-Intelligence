@@ -51,15 +51,51 @@ For production, move site credentials into encrypted secrets instead of storing 
 
 ## Run
 
-```powershell
-npm run dev
-```
+Double-click `Start-Triton-Alarm-Bridge.bat` to start the bridge on Windows.
+Double-click `Stop-Triton-Alarm-Bridge.bat` to stop the bridge and release port `3010`.
 
-or:
+The launcher opens a terminal, installs dependencies if `node_modules` is missing, and runs:
 
 ```powershell
 npm start
 ```
+
+For development with auto-restart:
+
+```powershell
+npm run dev
+```
+
+## Demo Gateway
+
+For local testing without a live SmartConnector server, create a site in the admin page with:
+
+```text
+Gateway Base URL: http://localhost:3010/demo-gateway
+Alarm Endpoint Path: /alarms/active
+Username: demo
+Password: demo
+Alarm Priorities: Critical,High,Medium
+```
+
+Then click `Test Connection` and `Fetch And Save Alarms`.
+
+For a live EBO/SmartConnector VM, set `Gateway Base URL` to the reachable scheme, host, and port, then set `Alarm Endpoint Path` to the actual REST alarm endpoint exposed by that gateway.
+
+## EBO EWS SOAP
+
+For a live EcoStruxure Building Operation EWS connection, use:
+
+```text
+Connection Type: EBO EWS SOAP
+Gateway Base URL: https://10.0.11.158
+EBO EWS SOAP URL: https://10.0.11.158/EcoStruxure/DataExchange
+Username: your EWS user
+Password: your EWS password
+Alarm Priorities: Critical,High,Medium
+```
+
+Keep `Poll automatically` off for the first live test, then click `Test Connection`.
 
 ## Seed Test Data
 

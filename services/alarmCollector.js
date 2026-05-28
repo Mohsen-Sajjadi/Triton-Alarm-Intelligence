@@ -1,16 +1,20 @@
 const Alarm = require("../models/Alarm");
+const Site = require("../models/Site");
 const { fetchActiveAlarms } = require("../connectors/eboAlarmConnector");
-const sites = require("../config/sites");
+const configuredSites = require("../config/sites");
 const { classifyAlarm } = require("./alarmClassifier");
 const { notifyCriticalAlarm } = require("./notificationService");
 
 async function collectAlarms() {
   console.log(`[Alarm Collector] Running at ${new Date().toISOString()}`);
 
+  const sites = await getPollingSites();
+
   for (const site of sites) {
-    if (!site.enabled) continue;
+    if (!site.enabled || site.pollingEnabled === false) continue;
 
     const alarms = await fetchActiveAlarms(site);
+    await updatePollStatus(site, true, `Fetched ${alarms.length} alarms`, alarms.length);
 
     for (const alarm of alarms) {
       const allowedPriority =
@@ -22,8 +26,36 @@ async function collectAlarms() {
         await upsertAlarm(alarm);
       } catch (error) {
         console.error(`[${site.siteName}] Failed to save alarm:`, error.message);
+        await updatePollStatus(site, false, error.message);
       }
     }
+  }
+}
+
+async function getPollingSites() {
+  const dbSites = await Site.find({
+    enabled: true,
+    pollingEnabled: true
+  }).lean();
+
+  return dbSites.length ? dbSites : configuredSites;
+}
+
+async function updatePollStatus(site, ok, message, alarmCount) {
+  if (!site._id && !site.siteId) return;
+
+  try {
+    await Site.findOneAndUpdate(
+      { siteId: site.siteId },
+      {
+        lastAlarmPollAt: new Date(),
+        lastAlarmPollOk: ok,
+        lastAlarmPollMessage: message,
+        ...(typeof alarmCount === "number" ? { lastAlarmCount: alarmCount } : {})
+      }
+    );
+  } catch (error) {
+    console.error(`[${site.siteName}] Failed to update poll status:`, error.message);
   }
 }
 
@@ -34,7 +66,7 @@ async function upsertAlarm(alarmData) {
     siteId: alarmData.siteId,
     sourcePath: alarmData.sourcePath,
     alarmName: alarmData.alarmName,
-    state: { $in: ["Active", "Acknowledged"] }
+    occurredAt: alarmData.occurredAt
   });
 
   if (existingAlarm) {
@@ -68,5 +100,6 @@ async function upsertAlarm(alarmData) {
 
 module.exports = {
   collectAlarms,
+  getPollingSites,
   upsertAlarm
 };

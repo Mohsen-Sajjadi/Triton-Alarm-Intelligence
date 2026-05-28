@@ -1,6 +1,7 @@
 const Point = require("../models/Point");
+const Site = require("../models/Site");
 const { fetchPointValues } = require("../connectors/eboAlarmConnector");
-const sites = require("../config/sites");
+const configuredSites = require("../config/sites");
 
 async function collectPoints() {
   if (process.env.ENABLE_POINT_COLLECTION !== "true") {
@@ -9,8 +10,12 @@ async function collectPoints() {
 
   console.log(`[Point Collector] Running at ${new Date().toISOString()}`);
 
+  const sites = await getPointPollingSites();
+
   for (const site of sites) {
-    if (!site.enabled || !site.pointDefinitions?.length) continue;
+    if (!site.enabled || site.pollingEnabled === false || !site.pointDefinitions?.length) {
+      continue;
+    }
 
     try {
       const points = await fetchPointValues(site);
@@ -20,6 +25,15 @@ async function collectPoints() {
       console.error(`[${site.siteName}] Failed to save point samples:`, error.message);
     }
   }
+}
+
+async function getPointPollingSites() {
+  const dbSites = await Site.find({
+    enabled: true,
+    pollingEnabled: true
+  }).lean();
+
+  return dbSites.length ? dbSites : configuredSites;
 }
 
 module.exports = {

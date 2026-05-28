@@ -1,17 +1,29 @@
 const https = require("https");
 const axios = require("axios");
+const { fetchEwsAlarmEvents } = require("./eboEwsSoapConnector");
 
 const insecureTestAgent = new https.Agent({
   rejectUnauthorized: false
 });
 
-async function fetchActiveAlarms(site) {
+async function fetchActiveAlarms(site, options = {}) {
+  if (site.connectionType === "EBO EWS SOAP") {
+    return fetchEwsAlarmEvents(site, options);
+  }
+
   try {
     /*
       Replace "/alarms/active" with the actual SmartConnector RESTful EWS
       Gateway alarm endpoint after the installed configuration is confirmed.
     */
-    const response = await axios.get(`${site.baseUrl}/alarms/active`, {
+    const baseUrl = site.baseUrl || site.serverUrl;
+
+    if (!baseUrl) {
+      throw new Error("Site baseUrl or serverUrl is required");
+    }
+
+    const url = buildEndpointUrl(baseUrl, site.alarmEndpointPath || "/alarms/active");
+    const response = await axios.get(url, {
       auth: {
         username: site.username,
         password: site.password
@@ -32,12 +44,16 @@ async function fetchActiveAlarms(site) {
 
     return alarms.map((alarm) => normalizeAlarm(alarm, site));
   } catch (error) {
-    console.error(`[${site.siteName}] Failed to fetch alarms:`, error.message);
+    const connectorError = buildConnectorError(error, site, "alarms");
+    console.error(`[${site.siteName}] Failed to fetch alarms:`, connectorError.message);
+    if (options.throwOnError) {
+      throw connectorError;
+    }
     return [];
   }
 }
 
-async function fetchPointValues(site) {
+async function fetchPointValues(site, options = {}) {
   const pointDefinitions = site.pointDefinitions || [];
 
   if (!pointDefinitions.length) {
@@ -49,8 +65,15 @@ async function fetchPointValues(site) {
       Replace this placeholder path with the actual SmartConnector RESTful EWS
       point endpoint when the site configuration is confirmed.
     */
+    const baseUrl = site.baseUrl || site.serverUrl;
+
+    if (!baseUrl) {
+      throw new Error("Site baseUrl or serverUrl is required");
+    }
+
+    const url = buildEndpointUrl(baseUrl, site.pointEndpointPath || "/points/read");
     const response = await axios.post(
-      `${site.baseUrl}/points/read`,
+      url,
       {
         points: pointDefinitions.map((point) => point.sourcePath)
       },
@@ -82,9 +105,89 @@ async function fetchPointValues(site) {
       return normalizePoint(valueRecord || {}, definition, site);
     });
   } catch (error) {
-    console.error(`[${site.siteName}] Failed to fetch points:`, error.message);
+    const connectorError = buildConnectorError(error, site, "points");
+    console.error(`[${site.siteName}] Failed to fetch points:`, connectorError.message);
+    if (options.throwOnError) {
+      throw connectorError;
+    }
     return [];
   }
+}
+
+function buildConnectorError(error, site, resourceType) {
+  const baseUrl = site.baseUrl || site.serverUrl;
+  const path =
+    resourceType === "points"
+      ? site.pointEndpointPath || "/points/read"
+      : site.alarmEndpointPath || "/alarms/active";
+  const testedUrl = baseUrl ? buildEndpointUrl(baseUrl, path) : path;
+  const statusCode = error.response?.status;
+  const responseBody =
+    typeof error.response?.data === "string"
+      ? error.response.data.slice(0, 500)
+      : error.response?.data;
+
+  const diagnostic = {
+    siteId: site.siteId,
+    siteName: site.siteName,
+    baseUrl,
+    testedUrl,
+    statusCode,
+    axiosCode: error.code,
+    responseBody,
+    likelyCause: getLikelyCause(statusCode, error.code),
+    nextStep: getNextStep(statusCode, error.code, resourceType)
+  };
+
+  const connectorError = new Error(
+    statusCode
+      ? `Request failed with status code ${statusCode}`
+      : error.message
+  );
+  connectorError.statusCode = statusCode;
+  connectorError.diagnostic = diagnostic;
+  return connectorError;
+}
+
+function buildEndpointUrl(baseUrl, endpointPath) {
+  const normalizedBase = String(baseUrl || "").replace(/\/+$/, "");
+  const normalizedPath = String(endpointPath || "").replace(/^\/?/, "/");
+  return `${normalizedBase}${normalizedPath}`;
+}
+
+function getLikelyCause(statusCode, axiosCode) {
+  if (statusCode === 400) return "The gateway rejected the request format.";
+  if (statusCode === 401) return "The server requires authentication or the username/password is incorrect.";
+  if (statusCode === 403) return "The account authenticated but does not have permission for this endpoint.";
+  if (statusCode === 404) {
+    return "The server is reachable, but this alarm endpoint path does not exist on that server.";
+  }
+  if (statusCode >= 500) return "The remote BMS/gateway server returned an internal error.";
+  if (axiosCode === "ECONNABORTED") return "The request timed out.";
+  if (axiosCode === "ENOTFOUND") return "The hostname could not be resolved.";
+  if (axiosCode === "ECONNREFUSED") return "The host was reached but the port refused the connection.";
+  if (axiosCode === "CERT_HAS_EXPIRED" || axiosCode === "DEPTH_ZERO_SELF_SIGNED_CERT") {
+    return "The HTTPS certificate is not trusted by Node.js.";
+  }
+  return "The connection failed before alarm data could be read.";
+}
+
+function getNextStep(statusCode, axiosCode, resourceType) {
+  if (statusCode === 404) {
+    return resourceType === "alarms"
+      ? "Confirm the real SmartConnector REST/EWS alarm endpoint. A WebStation page URL is not enough; this app currently tests /alarms/active."
+      : "Confirm the real point read endpoint. This app currently tests /points/read.";
+  }
+  if (statusCode === 401 || statusCode === 403) {
+    return "Verify the account, password, and read permissions in EBO/SmartConnector.";
+  }
+  if (axiosCode === "ECONNABORTED") {
+    return "Confirm BrinkAgent/Neeve is connected and the host is reachable from the server running Alarm Bridge.";
+  }
+  if (axiosCode === "ENOTFOUND") {
+    return "Use the IP address or verify DNS resolution from this server.";
+  }
+  return "Check the base URL, port, VPN/Neeve connection, and SmartConnector/EWS service status.";
 }
 
 function normalizeAlarm(alarm, site) {
@@ -180,5 +283,7 @@ function normalizePoint(point, definition, site) {
 
 module.exports = {
   fetchActiveAlarms,
-  fetchPointValues
+  fetchPointValues,
+  buildConnectorError,
+  buildEndpointUrl
 };

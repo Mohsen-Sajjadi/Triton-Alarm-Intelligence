@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const alarmRoutes = require("./routes/alarms");
 const aiRoutes = require("./routes/ai");
 const analyticsRoutes = require("./routes/analytics");
+const demoGatewayRoutes = require("./routes/demoGateway");
 const pointRoutes = require("./routes/points");
 const serviceIssueRoutes = require("./routes/serviceIssues");
 const siteRoutes = require("./routes/sites");
@@ -17,6 +18,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/admin", express.static("public"));
 
 app.use("/api/alarms", alarmRoutes);
 app.use("/api/points", pointRoutes);
@@ -24,6 +26,7 @@ app.use("/api/sites", siteRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/service-issues", serviceIssueRoutes);
+app.use("/demo-gateway", demoGatewayRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({

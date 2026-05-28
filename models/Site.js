@@ -8,15 +8,42 @@ const siteSchema = new mongoose.Schema(
     eboVersion: { type: String },
     connectionType: {
       type: String,
-      enum: ["Enterprise Server", "AS-P Direct", "SmartConnectorREST", "Unknown"],
+      enum: ["Enterprise Server", "AS-P Direct", "SmartConnectorREST", "EBO EWS SOAP", "Unknown"],
       default: "Unknown"
     },
     serverUrl: { type: String },
+    baseUrl: { type: String },
+    ewsUrl: { type: String },
+    alarmEndpointPath: { type: String, default: "/alarms/active" },
+    pointEndpointPath: { type: String, default: "/points/read" },
+    username: { type: String },
+    password: { type: String },
+    enabled: { type: Boolean, default: false },
+    pollingEnabled: { type: Boolean, default: false },
+    alarmPriorityFilter: {
+      type: [String],
+      default: ["Critical", "High"]
+    },
+    pointDefinitions: [
+      {
+        equipmentName: { type: String },
+        pointName: { type: String },
+        sourcePath: { type: String },
+        unit: { type: String }
+      }
+    ],
     status: {
       type: String,
       enum: ["Active", "Pilot", "Disabled"],
       default: "Pilot"
     },
+    lastConnectionTestAt: { type: Date },
+    lastConnectionOk: { type: Boolean },
+    lastConnectionMessage: { type: String },
+    lastAlarmPollAt: { type: Date },
+    lastAlarmPollOk: { type: Boolean },
+    lastAlarmPollMessage: { type: String },
+    lastAlarmCount: { type: Number },
     leadEngineer: { type: String },
     enterpriseServerAvailable: { type: Boolean, default: false },
     ewsEnabled: { type: Boolean, default: false },

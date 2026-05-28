@@ -1,5 +1,7 @@
 const express = require("express");
 const Site = require("../models/Site");
+const { fetchActiveAlarms } = require("../connectors/eboAlarmConnector");
+const { upsertAlarm } = require("../services/alarmCollector");
 
 const router = express.Router();
 
@@ -14,7 +16,7 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const site = await Site.create(req.body);
+    const site = await Site.create(normalizeSiteBody(req.body));
     res.status(201).json(site);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -25,7 +27,7 @@ router.patch("/:siteId", async (req, res) => {
   try {
     const site = await Site.findOneAndUpdate(
       { siteId: req.params.siteId },
-      req.body,
+      normalizeSiteBody(req.body),
       { new: true, runValidators: true }
     );
 
@@ -38,5 +40,138 @@ router.patch("/:siteId", async (req, res) => {
     return res.status(400).json({ error: error.message });
   }
 });
+
+router.delete("/:siteId", async (req, res) => {
+  try {
+    const site = await Site.findOneAndDelete({ siteId: req.params.siteId });
+
+    if (!site) {
+      return res.status(404).json({ error: "Site not found" });
+    }
+
+    return res.json({ deleted: true, siteId: site.siteId });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/:siteId/test-connection", async (req, res) => {
+  try {
+    const site = await Site.findOne({ siteId: req.params.siteId }).lean();
+
+    if (!site) {
+      return res.status(404).json({ error: "Site not found" });
+    }
+
+    const alarms = await fetchActiveAlarms(site, { throwOnError: true });
+
+    await Site.findOneAndUpdate(
+      { siteId: site.siteId },
+      {
+        lastConnectionTestAt: new Date(),
+        lastConnectionOk: true,
+        lastConnectionMessage: `Connection succeeded. Fetched ${alarms.length} alarms.`,
+        lastAlarmCount: alarms.length
+      }
+    );
+
+    return res.json({
+      ok: true,
+      alarmCount: alarms.length,
+      sampleAlarms: alarms.slice(0, 10)
+    });
+  } catch (error) {
+    await Site.findOneAndUpdate(
+      { siteId: req.params.siteId },
+      {
+        lastConnectionTestAt: new Date(),
+        lastConnectionOk: false,
+        lastConnectionMessage: error.message
+      }
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: error.message,
+      diagnostic: error.diagnostic
+    });
+  }
+});
+
+router.post("/:siteId/fetch-alarms", async (req, res) => {
+  try {
+    const site = await Site.findOne({ siteId: req.params.siteId }).lean();
+
+    if (!site) {
+      return res.status(404).json({ error: "Site not found" });
+    }
+
+    const alarms = await fetchActiveAlarms(site, { throwOnError: true });
+    const saved = [];
+
+    for (const alarm of alarms) {
+      const allowedPriority =
+        !site.alarmPriorityFilter?.length ||
+        site.alarmPriorityFilter.includes(alarm.priority);
+
+      if (!allowedPriority) continue;
+
+      saved.push(await upsertAlarm(alarm));
+    }
+
+    await Site.findOneAndUpdate(
+      { siteId: site.siteId },
+      {
+        lastAlarmPollAt: new Date(),
+        lastAlarmPollOk: true,
+        lastAlarmPollMessage: `Fetched ${alarms.length} alarms and saved ${saved.length}.`,
+        lastAlarmCount: alarms.length
+      }
+    );
+
+    return res.json({
+      ok: true,
+      fetched: alarms.length,
+      saved: saved.length,
+      sampleAlarms: alarms.slice(0, 10)
+    });
+  } catch (error) {
+    await Site.findOneAndUpdate(
+      { siteId: req.params.siteId },
+      {
+        lastAlarmPollAt: new Date(),
+        lastAlarmPollOk: false,
+        lastAlarmPollMessage: error.message
+      }
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error: error.message,
+      diagnostic: error.diagnostic
+    });
+  }
+});
+
+function normalizeSiteBody(body) {
+  const normalized = { ...body };
+
+  if (!normalized.baseUrl && normalized.serverUrl) {
+    normalized.baseUrl = normalized.serverUrl;
+  }
+
+  if (!normalized.serverUrl && normalized.baseUrl) {
+    normalized.serverUrl = normalized.baseUrl;
+  }
+
+  if (typeof normalized.alarmPriorityFilter === "string") {
+    normalized.alarmPriorityFilter = normalized.alarmPriorityFilter
+      .split(",")
+      .map((priority) => priority.trim())
+      .filter(Boolean);
+  }
+
+  return normalized;
+}
 
 module.exports = router;
