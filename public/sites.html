@@ -7,18 +7,24 @@
     <style>
       :root {
         color-scheme: light;
-        font-family: Arial, Helvetica, sans-serif;
-        --bg: #f5f7fa;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --bg: #f4f6f8;
         --panel: #ffffff;
-        --border: #d6dde7;
-        --ink: #14212f;
-        --muted: #5b6878;
+        --panel-soft: #f8fafc;
+        --border: #d9e1ea;
+        --border-strong: #b9c6d4;
+        --ink: #111827;
+        --muted: #607086;
         --primary: #075985;
+        --primary-hover: #0369a1;
         --primary-soft: #e6f4fb;
         --danger: #b42318;
         --danger-soft: #fff1f0;
         --ok: #18794e;
         --warn: #9a6700;
+        --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        --shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.06);
+        --focus: 0 0 0 3px rgba(7, 89, 133, 0.16);
       }
 
       * {
@@ -27,24 +33,31 @@
 
       body {
         margin: 0;
-        background: var(--bg);
+        background:
+          linear-gradient(180deg, #eef3f7 0, var(--bg) 230px),
+          var(--bg);
         color: var(--ink);
+        font-size: 15px;
       }
 
       header {
-        background: var(--panel);
+        background: rgba(255, 255, 255, 0.9);
         border-bottom: 1px solid var(--border);
-        padding: 18px 24px;
+        padding: 14px 22px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(12px);
       }
 
       h1 {
         margin: 0;
-        font-size: 22px;
+        font-size: 21px;
       }
 
       main {
         display: grid;
-        grid-template-columns: 340px minmax(0, 1fr);
+        grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
         gap: 16px;
         padding: 16px;
       }
@@ -53,15 +66,16 @@
       aside {
         background: var(--panel);
         border: 1px solid var(--border);
-        border-radius: 6px;
+        border-radius: 8px;
+        box-shadow: var(--shadow-soft);
       }
 
       aside {
-        padding: 14px;
+        padding: 12px;
       }
 
       section {
-        padding: 16px;
+        padding: 14px;
       }
 
       h2,
@@ -79,13 +93,14 @@
 
       p {
         color: var(--muted);
-        line-height: 1.45;
-        margin: 8px 0 0;
+        font-size: 13px;
+        line-height: 1.35;
+        margin: 5px 0 0;
       }
 
       label {
         display: block;
-        margin: 10px 0 5px;
+        margin: 7px 0 4px;
         color: #34455a;
         font-size: 13px;
         font-weight: 600;
@@ -95,38 +110,81 @@
       select,
       textarea {
         width: 100%;
-        min-height: 38px;
+        min-height: 34px;
         border: 1px solid var(--border);
-        border-radius: 4px;
-        padding: 8px 10px;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 7px 9px;
         font: inherit;
+        font-size: 14px;
+        transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
       }
 
       textarea {
-        min-height: 70px;
+        min-height: 54px;
         resize: vertical;
       }
 
+      .field-full textarea {
+        min-height: 42px;
+      }
+
+      input:hover,
+      select:hover,
+      textarea:hover {
+        border-color: var(--border-strong);
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus,
+      button:focus-visible {
+        border-color: var(--primary);
+        box-shadow: var(--focus);
+        outline: none;
+      }
+
       button {
-        min-height: 36px;
-        border: 1px solid var(--primary);
-        border-radius: 4px;
+        min-height: 34px;
+        border: 1px solid transparent;
+        border-radius: 8px;
         background: var(--primary);
         color: #ffffff;
         cursor: pointer;
         font: inherit;
-        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 7px 11px;
+        transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, color 140ms ease, transform 140ms ease;
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--primary-hover);
+        box-shadow: 0 8px 16px rgba(7, 89, 133, 0.18);
+        transform: translateY(-1px);
       }
 
       button.secondary {
         background: #ffffff;
         color: var(--primary);
+        border-color: var(--border);
+      }
+
+      button.secondary:hover:not(:disabled) {
+        background: var(--primary-soft);
+        border-color: rgba(7, 89, 133, 0.32);
       }
 
       button.danger {
         border-color: var(--danger);
         background: var(--danger-soft);
         color: var(--danger);
+      }
+
+      button.danger:hover:not(:disabled) {
+        background: var(--danger);
+        color: #ffffff;
+        box-shadow: 0 8px 16px rgba(180, 35, 24, 0.16);
       }
 
       button:disabled {
@@ -136,8 +194,16 @@
 
       table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
         font-size: 13px;
+      }
+
+      .table-shell {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-top: 10px;
+        overflow: auto;
       }
 
       .alarm-table {
@@ -147,14 +213,31 @@
       th,
       td {
         border-bottom: 1px solid var(--border);
-        padding: 9px 8px;
+        padding: 8px 9px;
         text-align: left;
         vertical-align: top;
       }
 
       th {
+        background: var(--panel-soft);
         color: var(--muted);
         font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+
+      tbody tr {
+        transition: background 140ms ease, box-shadow 140ms ease;
+      }
+
+      tbody tr:hover {
+        background: #e6f4fb;
+        box-shadow: inset 3px 0 0 var(--primary);
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
       }
 
       .alarm-title {
@@ -165,13 +248,13 @@
       .alarm-meta {
         color: var(--muted);
         font-size: 12px;
-        line-height: 1.35;
-        margin-top: 3px;
+        line-height: 1.28;
+        margin-top: 2px;
         overflow-wrap: anywhere;
       }
 
       .alarm-text {
-        line-height: 1.35;
+        line-height: 1.3;
         max-width: 520px;
         overflow-wrap: anywhere;
       }
@@ -181,22 +264,22 @@
       .actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
       }
 
       .toolbar {
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
+        margin-bottom: 9px;
       }
 
       .actions {
-        margin-top: 12px;
+        margin-top: 9px;
       }
 
       .site-list {
         display: grid;
-        gap: 8px;
+        gap: 7px;
       }
 
       .site-button {
@@ -205,12 +288,30 @@
         border-color: var(--border);
         color: var(--ink);
         text-align: left;
-        padding: 10px;
+        padding: 9px 30px 9px 10px;
+        position: relative;
+      }
+
+      .site-button::after {
+        content: ">";
+        color: var(--muted);
+        font-weight: 800;
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .site-button:hover:not(:disabled) {
+        background: var(--panel-soft);
+        border-color: var(--primary);
+        box-shadow: var(--shadow-soft);
       }
 
       .site-button.selected {
         background: var(--primary-soft);
         border-color: var(--primary);
+        box-shadow: inset 3px 0 0 var(--primary);
       }
 
       .site-button strong,
@@ -221,27 +322,99 @@
       .site-button span {
         color: var(--muted);
         font-size: 12px;
+        margin-top: 3px;
+      }
+
+      .site-button .connector-line {
+        color: var(--primary);
+        font-weight: 700;
+      }
+
+      .integration-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-bottom: 10px;
+      }
+
+      .integration-card {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel-soft);
+        padding: 10px;
+      }
+
+      .integration-card strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .integration-card span {
+        color: var(--muted);
+        display: block;
+        font-size: 12px;
+        line-height: 1.35;
         margin-top: 4px;
+      }
+
+      .inline-action {
+        min-height: 26px;
+        margin-top: 7px;
+        padding: 4px 8px;
+      }
+
+      .ai-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .ai-block {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel-soft);
+        padding: 10px;
+      }
+
+      .ai-block strong {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .ai-block p {
+        color: var(--ink);
+        margin: 0;
+      }
+
+      .ai-list {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .ai-list li {
+        margin: 4px 0;
       }
 
       .steps {
         display: grid;
-        gap: 12px;
+        counter-reset: setup-step;
+        gap: 11px;
       }
 
       .status-panel {
         border: 1px solid var(--border);
-        border-radius: 6px;
+        border-radius: 8px;
         display: grid;
-        gap: 8px;
-        margin-bottom: 12px;
-        padding: 12px;
+        gap: 6px;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: var(--panel-soft);
       }
 
       .status-line {
         display: flex;
         justify-content: space-between;
-        gap: 12px;
+        gap: 10px;
         font-size: 13px;
       }
 
@@ -254,7 +427,7 @@
         display: inline-block;
         font-size: 12px;
         font-weight: 700;
-        padding: 3px 8px;
+        padding: 2px 7px;
       }
 
       .pill.ok {
@@ -269,38 +442,78 @@
 
       .step {
         border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 14px;
+        border-radius: 8px;
+        padding: 12px;
+        background: linear-gradient(180deg, #ffffff 0, #fbfcfe 100%);
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+        transition: border-color 140ms ease, box-shadow 140ms ease;
+      }
+
+      .step:hover {
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow-soft);
       }
 
       .step-header {
         display: flex;
-        gap: 10px;
+        gap: 9px;
         align-items: flex-start;
+        border-bottom: 1px solid #edf1f6;
+        margin-bottom: 10px;
+        padding-bottom: 9px;
       }
 
       .step-number {
         display: grid;
         place-items: center;
-        flex: 0 0 28px;
-        height: 28px;
-        border-radius: 999px;
+        flex: 0 0 26px;
+        height: 26px;
+        border-radius: 8px;
         background: var(--primary);
         color: #ffffff;
+        font-size: 13px;
         font-weight: 700;
+        box-shadow: 0 8px 16px rgba(7, 89, 133, 0.2);
       }
 
       .grid-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        gap: 8px;
+      }
+
+      .form-grid {
+        align-items: end;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+      }
+
+      .field {
+        min-width: 0;
+      }
+
+      .field-wide {
+        grid-column: span 2;
+      }
+
+      .field-full {
+        grid-column: 1 / -1;
+      }
+
+      .compact-row {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 22px;
+        margin-top: 8px;
       }
 
       .check-row {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-top: 12px;
+        gap: 7px;
+        margin-top: 0;
       }
 
       .check-row input {
@@ -308,11 +521,15 @@
         min-height: 16px;
       }
 
+      .check-row label {
+        margin: 0;
+      }
+
       .status {
         color: var(--muted);
         font-size: 13px;
-        margin-top: 10px;
-        min-height: 20px;
+        margin-top: 7px;
+        min-height: 16px;
       }
 
       .ok {
@@ -328,29 +545,133 @@
       }
 
       .result-box {
-        background: #f8fafc;
+        background: #0f172a;
         border: 1px solid var(--border);
-        border-radius: 4px;
-        color: #253448;
+        border-radius: 8px;
+        color: #dbeafe;
         font-family: Consolas, monospace;
         font-size: 12px;
-        margin-top: 10px;
-        max-height: 210px;
+        margin-top: 8px;
+        max-height: 170px;
         overflow: auto;
-        padding: 10px;
+        padding: 9px;
         white-space: pre-wrap;
       }
 
       .empty {
         border: 1px dashed var(--border);
-        border-radius: 6px;
+        border-radius: 8px;
+        background: var(--panel-soft);
         color: var(--muted);
-        padding: 14px;
+        padding: 11px;
+        font-size: 13px;
+      }
+
+      .modal-backdrop {
+        align-items: center;
+        background: rgba(15, 23, 42, 0.48);
+        display: none;
+        inset: 0;
+        justify-content: center;
+        padding: 20px;
+        position: fixed;
+        z-index: 50;
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+      }
+
+      .modal {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        max-width: 440px;
+        padding: 16px;
+        width: 100%;
+      }
+
+      .setup-modal {
+        max-height: calc(100vh - 40px);
+        max-width: 980px;
+        overflow: auto;
+      }
+
+      .modal h2 {
+        font-size: 18px;
+      }
+
+      .modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 18px;
+      }
+
+      .modal-footer {
+        align-items: center;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 12px;
+      }
+
+      .modal-footer .actions {
+        margin-top: 0;
       }
 
       @media (max-width: 980px) {
         main {
           grid-template-columns: 1fr;
+        }
+
+        .site-rail {
+          order: -1;
+        }
+
+        .form-grid {
+          grid-template-columns: repeat(2, minmax(160px, 1fr));
+        }
+
+        .integration-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .ai-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 680px) {
+        header,
+        main {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+
+        .toolbar,
+        .grid-2,
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .grid-2,
+        .form-grid {
+          display: grid;
+        }
+
+        .field-wide,
+        .field-full {
+          grid-column: auto;
+        }
+
+        .toolbar {
+          align-items: flex-start;
+          flex-direction: column;
         }
       }
     </style>
@@ -361,7 +682,7 @@
     </header>
 
     <main>
-      <aside>
+      <aside class="site-rail">
         <div class="status-panel">
           <div class="toolbar" style="margin-bottom: 0">
             <h2>App Status</h2>
@@ -396,10 +717,83 @@
       <section>
         <div class="toolbar">
           <div>
-            <h2>Connection Workflow</h2>
-            <p id="selectedSiteLabel">Create or select a site, then complete each step in order.</p>
+            <h2>Alarm Workspace</h2>
+            <p id="selectedSiteLabel">Select a site to test the connection, fetch alarms, and review active issues.</p>
           </div>
-          <button type="button" class="danger" id="deleteSiteButton">Delete Site</button>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-header">
+              <div class="step-number">1</div>
+              <div>
+                <h3>Test the connection</h3>
+                <p>This verifies the server can reach the selected gateway and authenticate. A zero alarm count can still be valid if no active alarms exist.</p>
+              </div>
+            </div>
+            <div class="actions">
+              <button type="button" class="secondary" id="testWebStationButton">Test WebStation</button>
+              <button type="button" class="secondary" id="testEwsInfoButton">Test EWS</button>
+              <button type="button" id="testButton">Test Connection</button>
+            </div>
+            <div id="testStatus" class="status"></div>
+            <div id="testResult" class="result-box"></div>
+          </div>
+
+          <div class="step">
+            <div class="step-header">
+              <div class="step-number">2</div>
+              <div>
+                <h3>Fetch and review alarms</h3>
+                <p>Use this after the connection test succeeds. It saves matching alarms into MongoDB and refreshes the table below.</p>
+              </div>
+            </div>
+            <div class="actions">
+              <button type="button" id="fetchButton">Fetch And Save Alarms</button>
+              <button type="button" class="secondary" id="refreshAlarmsButton">Refresh From EBO</button>
+              <button type="button" class="secondary" id="analyzeSiteButton">Analyze Site</button>
+            </div>
+            <div id="alarmStatus" class="status"></div>
+            <div class="table-shell">
+              <table class="alarm-table">
+                <colgroup>
+                  <col style="width: 18%">
+                  <col style="width: 22%">
+                  <col style="width: 21%">
+                  <col style="width: 10%">
+                  <col style="width: 8%">
+                  <col style="width: 7%">
+                  <col style="width: 7%">
+                  <col style="width: 7%">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Alarm</th>
+                    <th>Source</th>
+                    <th>Alarm Text</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>State</th>
+                    <th>Alarm Time</th>
+                    <th>Last Seen</th>
+                  </tr>
+                </thead>
+                <tbody id="alarmRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="modal-backdrop" id="siteSetupModal" aria-hidden="true">
+      <div class="modal setup-modal" role="dialog" aria-modal="true" aria-labelledby="siteSetupModalTitle">
+        <div class="toolbar">
+          <div>
+            <h2 id="siteSetupModalTitle">Site setup</h2>
+            <p>Keep site identity and gateway connection details here so the main workspace stays focused on alarms.</p>
+          </div>
+          <button type="button" class="secondary" id="closeSiteSetupButton">Close</button>
         </div>
 
         <div class="steps">
@@ -413,36 +807,47 @@
             </div>
 
             <form id="siteForm">
-              <div class="grid-2">
-                <div>
+              <div class="integration-grid" aria-label="Available integration methods">
+                <div class="integration-card">
+                  <strong>SmartConnector REST</strong>
+                  <span>Use when a Triton or site gateway exposes a REST alarm endpoint.</span>
+                </div>
+                <div class="integration-card">
+                  <strong>EBO EWS SOAP</strong>
+                  <span>Use when EcoStruxure DataExchange accepts SOAP alarm events.</span>
+                </div>
+                <div class="integration-card">
+                  <strong>EBO WebStation</strong>
+                  <span>Use when WebStation works over VPN but EWS SOAP rejects requests.</span>
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="field">
                   <label for="siteId">Site ID</label>
                   <input id="siteId" name="siteId" required placeholder="office-demo-as">
                 </div>
-                <div>
+                <div class="field">
                   <label for="connectionType">Connection Type</label>
                   <select id="connectionType" name="connectionType">
                     <option>SmartConnectorREST</option>
                     <option>EBO EWS SOAP</option>
-                    <option>Enterprise Server</option>
-                    <option>AS-P Direct</option>
-                    <option>Unknown</option>
+                    <option>EBO WebStation</option>
                   </select>
                 </div>
-              </div>
-
-              <div class="grid-2">
-                <div>
+                <div class="field">
                   <label for="clientName">Client Name</label>
                   <input id="clientName" name="clientName" required placeholder="Triton Concepts">
                 </div>
-                <div>
+                <div class="field">
                   <label for="siteName">Site Name</label>
                   <input id="siteName" name="siteName" required placeholder="Office Demo AS">
                 </div>
-              </div>
 
-              <label for="notes">Notes</label>
-              <textarea id="notes" name="notes" placeholder="Internal notes for this connection"></textarea>
+                <div class="field-full">
+                  <label for="notes">Notes</label>
+                  <textarea id="notes" name="notes" placeholder="Internal notes for this connection"></textarea>
+                </div>
+              </div>
             </form>
           </div>
 
@@ -455,30 +860,34 @@
               </div>
             </div>
 
-            <label for="baseUrl">SmartConnector REST/EWS Gateway Base URL</label>
-            <input id="baseUrl" name="baseUrl" form="siteForm" required placeholder="https://hostname-or-ip">
-
-            <label for="ewsUrl">EBO EWS SOAP URL</label>
-            <input id="ewsUrl" name="ewsUrl" form="siteForm" placeholder="https://10.0.11.158/EcoStruxure/DataExchange">
-
-            <label for="alarmEndpointPath">Alarm Endpoint Path</label>
-            <input id="alarmEndpointPath" name="alarmEndpointPath" form="siteForm" placeholder="/alarms/active">
-
-            <div class="grid-2">
-              <div>
+            <div class="form-grid">
+              <div class="field-wide">
+                <label for="baseUrl">Gateway Base URL</label>
+                <input id="baseUrl" name="baseUrl" form="siteForm" required placeholder="https://hostname-or-ip">
+              </div>
+              <div class="field-wide">
+                <label for="ewsUrl">EBO EWS SOAP URL</label>
+                <input id="ewsUrl" name="ewsUrl" form="siteForm" placeholder="https://10.0.11.158/EcoStruxure/DataExchange">
+              </div>
+              <div class="field">
+                <label for="alarmEndpointPath">Alarm Endpoint Path</label>
+                <input id="alarmEndpointPath" name="alarmEndpointPath" form="siteForm" placeholder="/alarms/active">
+              </div>
+              <div class="field">
                 <label for="username">Username</label>
                 <input id="username" name="username" form="siteForm" autocomplete="username">
               </div>
-              <div>
+              <div class="field">
                 <label for="password">Password</label>
                 <input id="password" name="password" form="siteForm" type="password" autocomplete="current-password">
               </div>
+              <div class="field">
+                <label for="alarmPriorityFilter">Alarm Priorities</label>
+                <input id="alarmPriorityFilter" name="alarmPriorityFilter" form="siteForm" placeholder="Critical,High">
+              </div>
             </div>
 
-            <label for="alarmPriorityFilter">Alarm Priorities</label>
-            <input id="alarmPriorityFilter" name="alarmPriorityFilter" form="siteForm" placeholder="Critical,High">
-
-            <div class="grid-2">
+            <div class="compact-row">
               <div class="check-row">
                 <input id="enabled" name="enabled" form="siteForm" type="checkbox" checked>
                 <label for="enabled">Enabled</label>
@@ -488,73 +897,49 @@
                 <label for="pollingEnabled">Poll automatically</label>
               </div>
             </div>
-
-            <div class="actions">
-              <button type="submit" form="siteForm" id="saveSiteButton">Save Site</button>
-            </div>
             <div id="formStatus" class="status"></div>
           </div>
+        </div>
 
-          <div class="step">
-            <div class="step-header">
-              <div class="step-number">3</div>
-              <div>
-                <h3>Test the connection</h3>
-                <p>This verifies the server can reach the URL and authenticate. A zero alarm count can still be valid if no active alarms exist.</p>
-              </div>
-            </div>
-            <div class="actions">
-              <button type="button" id="testButton">Test Connection</button>
-            </div>
-            <div id="testStatus" class="status"></div>
-            <div id="testResult" class="result-box"></div>
-          </div>
-
-          <div class="step">
-            <div class="step-header">
-              <div class="step-number">4</div>
-              <div>
-                <h3>Fetch and review alarms</h3>
-                <p>Use this after the connection test succeeds. It saves matching alarms into MongoDB and refreshes the table below.</p>
-              </div>
-            </div>
-            <div class="actions">
-              <button type="button" id="fetchButton">Fetch And Save Alarms</button>
-              <button type="button" class="secondary" id="refreshAlarmsButton">Refresh From EBO</button>
-            </div>
-            <div id="alarmStatus" class="status"></div>
-            <table class="alarm-table">
-              <colgroup>
-                <col style="width: 20%">
-                <col style="width: 23%">
-                <col style="width: 25%">
-                <col style="width: 10%">
-                <col style="width: 8%">
-                <col style="width: 7%">
-                <col style="width: 7%">
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Alarm</th>
-                  <th>Source</th>
-                  <th>Alarm Text</th>
-                  <th>Category</th>
-                  <th>Priority</th>
-                  <th>State</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody id="alarmRows"></tbody>
-            </table>
+        <div class="modal-footer">
+          <button type="button" class="danger" id="deleteSiteButton">Delete Site</button>
+          <div class="actions">
+            <button type="button" class="secondary" id="cancelSiteSetupButton">Cancel</button>
+            <button type="submit" form="siteForm" id="saveSiteButton">Save Site</button>
           </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="deleteModal" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <h2 id="deleteModalTitle">Delete site?</h2>
+        <p id="deleteModalMessage">Saved alarms will remain in MongoDB.</p>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="cancelDeleteButton">Cancel</button>
+          <button type="button" class="danger" id="confirmDeleteButton">Delete Site</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="aiModal" aria-hidden="true">
+      <div class="modal setup-modal" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+        <div class="toolbar">
+          <div>
+            <h2 id="aiModalTitle">AI Alarm Analysis</h2>
+            <p id="aiModalSubtitle">Draft advisory output. Review before acting.</p>
+          </div>
+          <button type="button" class="secondary" id="closeAiModalButton">Close</button>
+        </div>
+        <div id="aiModalBody" class="ai-grid"></div>
+      </div>
+    </div>
 
     <script>
       const state = {
         sites: [],
-        selectedSiteId: ""
+        selectedSiteId: "",
+        activeAlarms: []
       };
 
       const siteForm = document.getElementById("siteForm");
@@ -571,6 +956,19 @@
       const bridgeApp = document.getElementById("bridgeApp");
       const bridgeTime = document.getElementById("bridgeTime");
       const bridgeStatusMessage = document.getElementById("bridgeStatusMessage");
+      const siteSetupModal = document.getElementById("siteSetupModal");
+      const closeSiteSetupButton = document.getElementById("closeSiteSetupButton");
+      const cancelSiteSetupButton = document.getElementById("cancelSiteSetupButton");
+      const deleteModal = document.getElementById("deleteModal");
+      const deleteModalMessage = document.getElementById("deleteModalMessage");
+      const cancelDeleteButton = document.getElementById("cancelDeleteButton");
+      const confirmDeleteButton = document.getElementById("confirmDeleteButton");
+      const aiModal = document.getElementById("aiModal");
+      const aiModalTitle = document.getElementById("aiModalTitle");
+      const aiModalSubtitle = document.getElementById("aiModalSubtitle");
+      const aiModalBody = document.getElementById("aiModalBody");
+      const closeAiModalButton = document.getElementById("closeAiModalButton");
+      let pendingDeleteConfirm = null;
 
       async function api(path, options) {
         const response = await fetch(path, {
@@ -593,7 +991,7 @@
         document.getElementById("enabled").checked = true;
         document.getElementById("pollingEnabled").checked = false;
         state.selectedSiteId = "";
-        selectedSiteLabel.textContent = "New site. Fill in Step 1 and Step 2, then save.";
+        selectedSiteLabel.textContent = "New site. Fill in the setup modal, then save.";
         clearResults();
         renderSites();
       }
@@ -682,9 +1080,14 @@
           button.className = `site-button${site.siteId === state.selectedSiteId ? " selected" : ""}`;
           button.innerHTML = [
             `<strong>${escapeHtml(site.clientName)} - ${escapeHtml(site.siteName)}</strong>`,
+            `<span class="connector-line">${escapeHtml(site.connectionType || "Unknown")}</span>`,
             `<span>${escapeHtml(site.siteId)} | ${site.pollingEnabled ? "polling on" : "polling off"} | ${site.lastConnectionOk === true ? "last test ok" : site.lastConnectionOk === false ? "last test failed" : "not tested"}</span>`
           ].join("");
           button.addEventListener("click", () => setSiteForm(site));
+          button.addEventListener("dblclick", () => {
+            setSiteForm(site);
+            openSiteSetupModal();
+          });
           siteList.appendChild(button);
         }
       }
@@ -701,42 +1104,74 @@
         state.selectedSiteId = site.siteId;
         await loadSites();
         setSiteForm(site);
-        setStatus(formStatus, "Site saved. Continue to Step 3.", true);
+        setStatus(formStatus, "Site saved. Continue in the alarm workspace.", true);
         return site;
       }
 
       async function deleteSite() {
         const siteId = state.selectedSiteId || document.getElementById("siteId").value.trim();
         if (!siteId) {
-          setStatus(formStatus, "Select a site before deleting.", false);
+          setStatus(alarmStatus, "Select a site before deleting.", false);
           return;
         }
 
-        const confirmed = window.confirm(`Delete site "${siteId}"? Saved alarms will remain in MongoDB.`);
+        const confirmed = await confirmDeleteSite(siteId);
         if (!confirmed) return;
 
         await api(`/api/sites/${encodeURIComponent(siteId)}`, { method: "DELETE" });
         await loadSites();
         clearForm();
         await loadSites();
+        closeSiteSetupModal();
         setStatus(formStatus, "Site deleted.", true);
       }
 
       async function testConnection() {
-        const site = await saveSite();
-        const result = await api(`/api/sites/${encodeURIComponent(site.siteId)}/test-connection`, {
+        if (!requireSelectedSite(testStatus)) return;
+
+        const result = await api(`/api/sites/${encodeURIComponent(state.selectedSiteId)}/test-connection`, {
           method: "POST"
         });
-        setStatus(testStatus, `Connection OK. Fetched ${result.alarmCount} alarms. Continue to Step 4.`, true);
-        testResult.textContent = JSON.stringify(result.sampleAlarms, null, 2);
+        setStatus(testStatus, `Connection OK by ${result.connector || "selected connector"}. Fetched ${result.alarmCount} alarms.`, true);
+        testResult.textContent = JSON.stringify({
+          connector: result.connector,
+          sampleAlarms: result.sampleAlarms
+        }, null, 2);
+      }
+
+      async function testEwsInfo() {
+        if (!requireSelectedSite(testStatus)) return;
+
+        const result = await api(`/api/sites/${encodeURIComponent(state.selectedSiteId)}/test-ews-info`, {
+          method: "POST"
+        });
+        const operations = result.information?.operations || [];
+        setStatus(testStatus, `EWS info OK using SOAP ${result.soapVersion}. Supported operations: ${operations.length}.`, true);
+        testResult.textContent = JSON.stringify({
+          endpointUrl: result.endpointUrl,
+          soapVersion: result.soapVersion,
+          version: result.information?.version,
+          operations
+        }, null, 2);
+      }
+
+      async function testWebStation() {
+        if (!requireSelectedSite(testStatus)) return;
+
+        const result = await api(`/api/sites/${encodeURIComponent(state.selectedSiteId)}/test-webstation`, {
+          method: "POST"
+        });
+        setStatus(testStatus, `WebStation OK. Alarm record range ${result.alarmRecords?.firstRecord || "-"} to ${result.alarmRecords?.lastRecord || "-"}.`, true);
+        testResult.textContent = JSON.stringify(result, null, 2);
       }
 
       async function fetchAlarms() {
-        const site = await saveSite();
-        const result = await api(`/api/sites/${encodeURIComponent(site.siteId)}/fetch-alarms`, {
+        if (!requireSelectedSite(alarmStatus)) return;
+
+        const result = await api(`/api/sites/${encodeURIComponent(state.selectedSiteId)}/fetch-alarms`, {
           method: "POST"
         });
-        setStatus(alarmStatus, `Fetched ${result.fetched} alarms and saved ${result.saved}.`, true);
+        setStatus(alarmStatus, `Fetched ${result.fetched} alarms by ${result.connector || "selected connector"}, saved ${result.saved}, closed ${result.returnedToNormal || 0}.`, true);
         await loadAlarms();
       }
 
@@ -749,40 +1184,57 @@
         const result = await api(`/api/sites/${encodeURIComponent(state.selectedSiteId)}/fetch-alarms`, {
           method: "POST"
         });
-        setStatus(alarmStatus, `Refreshed from EBO. Fetched ${result.fetched} alarms and saved ${result.saved}.`, true);
+        setStatus(alarmStatus, `Refreshed by ${result.connector || "selected connector"}. Fetched ${result.fetched}, saved ${result.saved}, closed ${result.returnedToNormal || 0}.`, true);
         await loadAlarms();
       }
 
       async function loadAlarms() {
-        const alarms = await api("/api/alarms/active");
-        const selected = state.selectedSiteId
-          ? alarms.filter((alarm) => alarm.siteId === state.selectedSiteId)
-          : alarms;
+        const path = state.selectedSiteId
+          ? `/api/alarms/active?siteId=${encodeURIComponent(state.selectedSiteId)}&limit=2000`
+          : "/api/alarms/active?limit=2000";
+        const selected = await api(path);
+        state.activeAlarms = selected;
 
         alarmRows.innerHTML = "";
+        const connector = selected.find((alarm) => alarm.rawData?.connector)?.rawData?.connector;
         alarmStatus.textContent = state.selectedSiteId
-          ? `${selected.length} active alarm${selected.length === 1 ? "" : "s"} for selected site`
+          ? `${selected.length} active alarm${selected.length === 1 ? "" : "s"} for selected site${connector ? ` via ${connector}` : ""}`
           : `${selected.length} active alarm${selected.length === 1 ? "" : "s"}`;
 
         if (!selected.length) {
           const row = document.createElement("tr");
-          row.innerHTML = "<td colspan=\"7\">No active alarms found for the selected site.</td>";
+          row.innerHTML = "<td colspan=\"8\"><div class=\"empty\">No active alarms found for the selected site.</div></td>";
           alarmRows.appendChild(row);
           return;
         }
 
         for (const alarm of selected) {
+          appendAlarmRow(alarm);
+        }
+      }
+
+      function appendAlarmRow(alarm) {
+        try {
           const sourceName = alarm.rawData?.SourceName || alarm.alarmName || "";
-          const sourcePath = alarm.rawData?.ID?.split("|")[1] || alarm.sourcePath || "";
-          const messageParts = splitAlarmMessage(alarm.rawData?.Message || alarm.message || alarm.alarmName || "");
+          const rawId = typeof alarm.rawData?.ID === "string" ? alarm.rawData.ID : "";
+          const sourcePath = rawId.split("|")[1] || alarm.rawData?.Source || alarm.sourcePath || "";
+          const messageParts = splitAlarmMessage(
+            alarm.rawData?.Message ||
+            alarm.rawData?.AlarmText ||
+            alarm.message ||
+            alarm.alarmName ||
+            ""
+          );
           const alarmTitle = messageParts.title || alarm.alarmName || sourceName || "";
           const alarmText = messageParts.detail || messageParts.title || "";
-          const alarmCategory = alarm.rawData?.Type || alarm.category || "";
+          const alarmCategory = alarm.rawData?.Type || alarm.rawData?.Category || alarm.category || "";
+          const sequenceNumber = alarm.rawData?.SEQNO ? `Seq ${escapeHtml(alarm.rawData.SEQNO)}` : "";
           const row = document.createElement("tr");
           row.innerHTML = `
             <td>
               <div class="alarm-title">${escapeHtml(alarmTitle)}</div>
               <div class="alarm-meta">${escapeHtml(alarm.clientName || "")} / ${escapeHtml(alarm.siteName || "")}</div>
+              <button type="button" class="secondary inline-action" data-ai-alarm-id="${escapeHtml(alarm._id)}">Analyze</button>
             </td>
             <td>
               <div class="alarm-title">${escapeHtml(sourceName)}</div>
@@ -797,10 +1249,112 @@
               ${escapeHtml(alarm.priority || "")}
             </td>
             <td>${escapeHtml(alarm.state || "")}</td>
-            <td>${alarm.occurredAt ? escapeHtml(new Date(alarm.occurredAt).toLocaleString()) : ""}</td>
+            <td>
+              <div>${alarm.occurredAt ? escapeHtml(new Date(alarm.occurredAt).toLocaleString()) : ""}</div>
+              <div class="alarm-meta">${sequenceNumber}</div>
+            </td>
+            <td>
+              <div>${alarm.updatedAt ? escapeHtml(new Date(alarm.updatedAt).toLocaleString()) : ""}</div>
+              <div class="alarm-meta">${escapeHtml(alarm.rawData?.connector || "")}</div>
+            </td>
+          `;
+          alarmRows.appendChild(row);
+          row.querySelector("[data-ai-alarm-id]").addEventListener("click", (event) => {
+            event.stopPropagation();
+            withBusy(event.currentTarget, () => analyzeAlarm(alarm._id));
+          });
+        } catch (error) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td colspan="8">
+              <div class="empty">Could not render alarm ${escapeHtml(alarm._id || alarm.alarmName || "")}: ${escapeHtml(error.message)}</div>
+            </td>
           `;
           alarmRows.appendChild(row);
         }
+      }
+
+      async function analyzeAlarm(alarmId) {
+        const result = await api("/api/ai/analyze-alarm", {
+          method: "POST",
+          body: JSON.stringify({ alarmId })
+        });
+        showAiAnalysis(result, "AI Alarm Analysis", `${result.clientName || ""} / ${result.siteName || ""}`);
+      }
+
+      async function analyzeSite() {
+        if (!requireSelectedSite(alarmStatus)) return;
+        const result = await api("/api/ai/analyze-site", {
+          method: "POST",
+          body: JSON.stringify({ siteId: state.selectedSiteId, limit: 75 })
+        });
+        showAiAnalysis(result, "AI Site Analysis", state.selectedSiteId);
+      }
+
+      function showAiAnalysis(result, title, subtitle) {
+        aiModalTitle.textContent = title;
+        aiModalSubtitle.textContent = subtitle || "Draft advisory output. Review before acting.";
+        aiModalBody.innerHTML = renderAiAnalysis(result);
+        aiModal.classList.add("open");
+        aiModal.setAttribute("aria-hidden", "false");
+        closeAiModalButton.focus();
+      }
+
+      function closeAiModal() {
+        aiModal.classList.remove("open");
+        aiModal.setAttribute("aria-hidden", "true");
+      }
+
+      function renderAiAnalysis(result) {
+        const evidence = Array.isArray(result.evidence) ? result.evidence : [];
+        const riskNotes = Array.isArray(result.riskNotes) ? result.riskNotes : [];
+        const groups = Array.isArray(result.groups) ? result.groups : [];
+        return `
+          <div class="ai-block">
+            <strong>Summary</strong>
+            <p>${escapeHtml(result.aiSummary || result.summary || "")}</p>
+          </div>
+          <div class="ai-block">
+            <strong>Urgency</strong>
+            <p>${escapeHtml(result.urgency || "Medium")} / confidence ${escapeHtml(result.confidence || "Medium")}</p>
+            <p>${result.technicianRequired ? "Technician recommended." : "Remote review may be enough first."}</p>
+          </div>
+          <div class="ai-block">
+            <strong>Likely Cause</strong>
+            <p>${escapeHtml(result.likelyCause || "Unknown")}</p>
+          </div>
+          <div class="ai-block">
+            <strong>Recommended Action</strong>
+            <p>${escapeHtml(result.recommendedAction || "")}</p>
+          </div>
+          <div class="ai-block">
+            <strong>Ticket Draft</strong>
+            <p>${escapeHtml(result.ticketDraft || "")}</p>
+          </div>
+          <div class="ai-block">
+            <strong>Provider</strong>
+            <p>${escapeHtml(result.provider || "local-rules")} ${result.model ? ` / ${escapeHtml(result.model)}` : ""}</p>
+          </div>
+          <div class="ai-block">
+            <strong>Evidence</strong>
+            ${renderList(evidence)}
+          </div>
+          <div class="ai-block">
+            <strong>Risk Notes</strong>
+            ${renderList(riskNotes)}
+          </div>
+          ${groups.length ? `
+            <div class="ai-block field-full">
+              <strong>Alarm Groups</strong>
+              ${renderList(groups.slice(0, 8).map((group) => `${group.label}: ${group.count} active, ${group.high || 0} high, ${group.critical || 0} critical`))}
+            </div>
+          ` : ""}
+        `;
+      }
+
+      function renderList(items) {
+        if (!items.length) return "<p>-</p>";
+        return `<ul class="ai-list">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
       }
 
       function splitAlarmMessage(message) {
@@ -853,6 +1407,49 @@
         }
       }
 
+      function requireSelectedSite(statusElement) {
+        if (state.selectedSiteId) return true;
+        setStatus(statusElement, "Select a site from the right side, or click New Site to add one.", false);
+        return false;
+      }
+
+      function openSiteSetupModal() {
+        deleteSiteButton.disabled = !state.selectedSiteId;
+        siteSetupModal.classList.add("open");
+        siteSetupModal.setAttribute("aria-hidden", "false");
+        document.getElementById("siteId").focus();
+      }
+
+      function closeSiteSetupModal() {
+        siteSetupModal.classList.remove("open");
+        siteSetupModal.setAttribute("aria-hidden", "true");
+      }
+
+      function beginNewSite() {
+        clearForm();
+        openSiteSetupModal();
+      }
+
+      function confirmDeleteSite(siteId) {
+        deleteModalMessage.textContent = `Delete "${siteId}"? Saved alarms will remain in MongoDB.`;
+        deleteModal.classList.add("open");
+        deleteModal.setAttribute("aria-hidden", "false");
+        confirmDeleteButton.focus();
+
+        return new Promise((resolve) => {
+          pendingDeleteConfirm = resolve;
+        });
+      }
+
+      function closeDeleteModal(confirmed) {
+        if (!pendingDeleteConfirm) return;
+        const resolve = pendingDeleteConfirm;
+        pendingDeleteConfirm = null;
+        deleteModal.classList.remove("open");
+        deleteModal.setAttribute("aria-hidden", "true");
+        resolve(confirmed);
+      }
+
       function showError(error) {
         const diagnostic = error.body?.diagnostic;
 
@@ -864,7 +1461,7 @@
 
         setStatus(testStatus, error.message, false);
         testResult.textContent = [
-          `Tested URL: ${diagnostic.testedUrl || "-"}`,
+          `Tested URL: ${diagnostic.testedUrl || diagnostic.endpointUrl || "-"}`,
           `HTTP Status: ${diagnostic.statusCode || "-"}`,
           `Meaning: ${diagnostic.likelyCause || "-"}`,
           `Next Step: ${diagnostic.nextStep || "-"}`,
@@ -878,9 +1475,17 @@
 
       siteForm.addEventListener("submit", (event) => {
         event.preventDefault();
-        withBusy(document.getElementById("saveSiteButton"), saveSite);
+        withBusy(document.getElementById("saveSiteButton"), async () => {
+          await saveSite();
+          closeSiteSetupModal();
+        });
       });
-      document.getElementById("newSiteButton").addEventListener("click", clearForm);
+      document.getElementById("newSiteButton").addEventListener("click", beginNewSite);
+      closeSiteSetupButton.addEventListener("click", closeSiteSetupModal);
+      cancelSiteSetupButton.addEventListener("click", closeSiteSetupModal);
+      siteSetupModal.addEventListener("click", (event) => {
+        if (event.target === siteSetupModal) closeSiteSetupModal();
+      });
       document.getElementById("refreshSitesButton").addEventListener("click", () =>
         withBusy(document.getElementById("refreshSitesButton"), loadSites)
       );
@@ -888,14 +1493,37 @@
         withBusy(document.getElementById("refreshStatusButton"), loadAppStatus)
       );
       deleteSiteButton.addEventListener("click", () => withBusy(deleteSiteButton, deleteSite));
+      cancelDeleteButton.addEventListener("click", () => closeDeleteModal(false));
+      confirmDeleteButton.addEventListener("click", () => closeDeleteModal(true));
+      deleteModal.addEventListener("click", (event) => {
+        if (event.target === deleteModal) closeDeleteModal(false);
+      });
+      closeAiModalButton.addEventListener("click", closeAiModal);
+      aiModal.addEventListener("click", (event) => {
+        if (event.target === aiModal) closeAiModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && pendingDeleteConfirm) closeDeleteModal(false);
+        if (event.key === "Escape" && siteSetupModal.classList.contains("open")) closeSiteSetupModal();
+        if (event.key === "Escape" && aiModal.classList.contains("open")) closeAiModal();
+      });
       document.getElementById("testButton").addEventListener("click", () =>
         withBusy(document.getElementById("testButton"), testConnection)
+      );
+      document.getElementById("testEwsInfoButton").addEventListener("click", () =>
+        withBusy(document.getElementById("testEwsInfoButton"), testEwsInfo)
+      );
+      document.getElementById("testWebStationButton").addEventListener("click", () =>
+        withBusy(document.getElementById("testWebStationButton"), testWebStation)
       );
       document.getElementById("fetchButton").addEventListener("click", () =>
         withBusy(document.getElementById("fetchButton"), fetchAlarms)
       );
       document.getElementById("refreshAlarmsButton").addEventListener("click", () =>
         withBusy(document.getElementById("refreshAlarmsButton"), refreshAlarmsFromEbo)
+      );
+      document.getElementById("analyzeSiteButton").addEventListener("click", () =>
+        withBusy(document.getElementById("analyzeSiteButton"), analyzeSite)
       );
 
       clearForm();

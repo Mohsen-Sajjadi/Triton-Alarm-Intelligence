@@ -1,14 +1,35 @@
 const https = require("https");
 const axios = require("axios");
 const { fetchEwsAlarmEvents } = require("./eboEwsSoapConnector");
+const { fetchWebStationAlarms } = require("./eboWebStationConnector");
 
 const insecureTestAgent = new https.Agent({
   rejectUnauthorized: false
 });
 
 async function fetchActiveAlarms(site, options = {}) {
+  if (site.connectionType === "EBO WebStation") {
+    const alarms = await fetchWebStationAlarms(site, options);
+    return tagConnector(alarms, "EBO WebStation");
+  }
+
   if (site.connectionType === "EBO EWS SOAP") {
-    return fetchEwsAlarmEvents(site, options);
+    try {
+      const alarms = await fetchEwsAlarmEvents(site, { ...options, throwOnError: true });
+      return tagConnector(alarms, "EBO EWS SOAP");
+    } catch (error) {
+      if (error.statusCode === 400 && (site.baseUrl || site.serverUrl)) {
+        console.warn(
+          `[${site.siteName}] EWS SOAP returned 400; trying WebStation alarm records.`
+        );
+        const alarms = await fetchWebStationAlarms(site, options);
+        return tagConnector(alarms, "EBO WebStation fallback");
+      }
+      if (options.throwOnError) {
+        throw error;
+      }
+      return [];
+    }
   }
 
   try {
@@ -42,7 +63,7 @@ async function fetchActiveAlarms(site, options = {}) {
       return [];
     }
 
-    return alarms.map((alarm) => normalizeAlarm(alarm, site));
+    return tagConnector(alarms.map((alarm) => normalizeAlarm(alarm, site)), "SmartConnectorREST");
   } catch (error) {
     const connectorError = buildConnectorError(error, site, "alarms");
     console.error(`[${site.siteName}] Failed to fetch alarms:`, connectorError.message);
@@ -51,6 +72,16 @@ async function fetchActiveAlarms(site, options = {}) {
     }
     return [];
   }
+}
+
+function tagConnector(alarms, connectorName) {
+  return alarms.map((alarm) => ({
+    ...alarm,
+    rawData: {
+      ...(alarm.rawData || {}),
+      connector: alarm.rawData?.connector || connectorName
+    }
+  }));
 }
 
 async function fetchPointValues(site, options = {}) {

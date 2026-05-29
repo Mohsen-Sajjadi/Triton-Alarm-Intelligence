@@ -4,7 +4,8 @@ const axios = require("axios");
 const { XMLParser } = require("fast-xml-parser");
 
 const EWS_NAMESPACE = "http://www.schneider-electric.com/common/dataexchange/2011/05";
-const GET_ALARM_EVENTS_ACTION = `${EWS_NAMESPACE}/GetAlarmEventsIn`;
+const GET_ALARM_EVENTS_ACTION = `${EWS_NAMESPACE}/GetAlarmEventsRequest`;
+const GET_WEB_SERVICE_INFORMATION_ACTION = `${EWS_NAMESPACE}/GetWebServiceInformationRequest`;
 
 const insecureTestAgent = new https.Agent({
   rejectUnauthorized: false
@@ -24,10 +25,7 @@ async function fetchEwsAlarmEvents(site, options = {}) {
     let pageCount = 0;
 
     do {
-      const envelope = buildGetAlarmEventsEnvelope(site, moreDataRef);
-      const response = await postWithDigestAuth(endpointUrl, envelope, site, {
-        soapAction: GET_ALARM_EVENTS_ACTION
-      });
+      const response = await postGetAlarmEvents(endpointUrl, site, moreDataRef);
       const page = parseAlarmEventsResponse(response.data);
 
       alarms.push(...page.alarms);
@@ -47,6 +45,76 @@ async function fetchEwsAlarmEvents(site, options = {}) {
   }
 }
 
+async function fetchEwsWebServiceInformation(site) {
+  const endpointUrl = getEwsEndpointUrl(site);
+  const attempts = [
+    { soapVersion: "1.2" },
+    { soapVersion: "1.1" }
+  ];
+  let lastError;
+
+  for (const attempt of attempts) {
+    const envelope = buildGetWebServiceInformationEnvelope({
+      soapVersion: attempt.soapVersion,
+      endpointUrl
+    });
+
+    try {
+      const response = await postWithDigestAuth(endpointUrl, envelope, site, {
+        soapAction: GET_WEB_SERVICE_INFORMATION_ACTION,
+        soapVersion: attempt.soapVersion
+      });
+
+      return {
+        endpointUrl,
+        soapVersion: attempt.soapVersion,
+        information: parseWebServiceInformationResponse(response.data),
+        rawResponse: typeof response.data === "string"
+          ? response.data.slice(0, 1500)
+          : response.data
+      };
+    } catch (error) {
+      if (error.response?.status !== 400) {
+        throw buildEwsConnectorError(error, site);
+      }
+      lastError = error;
+    }
+  }
+
+  throw buildEwsConnectorError(lastError, site);
+}
+
+async function postGetAlarmEvents(endpointUrl, site, moreDataRef) {
+  const attempts = [
+    { soapVersion: "1.2", includePriorityFilter: true },
+    { soapVersion: "1.2", includePriorityFilter: false },
+    { soapVersion: "1.1", includePriorityFilter: true },
+    { soapVersion: "1.1", includePriorityFilter: false }
+  ];
+  let lastError;
+
+  for (const attempt of attempts) {
+    const envelope = buildGetAlarmEventsEnvelope(site, moreDataRef, {
+      ...attempt,
+      endpointUrl
+    });
+
+    try {
+      return await postWithDigestAuth(endpointUrl, envelope, site, {
+        soapAction: GET_ALARM_EVENTS_ACTION,
+        soapVersion: attempt.soapVersion
+      });
+    } catch (error) {
+      if (error.response?.status !== 400) {
+        throw error;
+      }
+      lastError = error;
+    }
+  }
+
+  throw lastError;
+}
+
 function getEwsEndpointUrl(site) {
   if (site.ewsUrl) return site.ewsUrl;
 
@@ -63,10 +131,7 @@ function getEwsEndpointUrl(site) {
 }
 
 async function postWithDigestAuth(url, body, site, options = {}) {
-  const headers = {
-    "Content-Type": `application/soap+xml; charset=utf-8; action="${options.soapAction}"`,
-    Accept: "application/soap+xml, text/xml"
-  };
+  const headers = buildSoapHeaders(options);
 
   try {
     return await axios.post(url, body, {
@@ -97,6 +162,21 @@ async function postWithDigestAuth(url, body, site, options = {}) {
       httpsAgent: insecureTestAgent
     });
   }
+}
+
+function buildSoapHeaders(options = {}) {
+  if (options.soapVersion === "1.1") {
+    return {
+      "Content-Type": "text/xml; charset=utf-8",
+      SOAPAction: `"${options.soapAction}"`,
+      Accept: "text/xml, application/soap+xml"
+    };
+  }
+
+  return {
+    "Content-Type": `application/soap+xml; charset=utf-8; action="${options.soapAction}"`,
+    Accept: "application/soap+xml, text/xml"
+  };
 }
 
 function buildDigestAuthorizationHeader({ challenge, method, url, username, password }) {
@@ -169,24 +249,59 @@ function escapeDigestValue(value) {
   return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
-function buildGetAlarmEventsEnvelope(site, moreDataRef) {
+function buildGetAlarmEventsEnvelope(site, moreDataRef, options = {}) {
+  const soapVersion = options.soapVersion || "1.2";
+  const includePriorityFilter = options.includePriorityFilter !== false;
+  const endpointUrl = options.endpointUrl || getEwsEndpointUrl(site);
   const { priorityFrom, priorityTo } = getPriorityRange(site.alarmPriorityFilter);
   const parameterXml = moreDataRef
     ? `<GetAlarmEventsParameter><MoreDataRef>${escapeXml(moreDataRef)}</MoreDataRef></GetAlarmEventsParameter>`
-    : "<GetAlarmEventsParameter></GetAlarmEventsParameter>";
-
-  return `<?xml version="1.0" encoding="utf-8"?>
-<soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-  <soap12:Body>
-    <GetAlarmEventsRequest xmlns="${EWS_NAMESPACE}" version="1.2">
-      ${parameterXml}
-      <GetAlarmEventsFilter>
+    : "<GetAlarmEventsParameter />";
+  const filterXml = includePriorityFilter
+    ? `<GetAlarmEventsFilter>
         <PriorityFrom>${priorityFrom}</PriorityFrom>
         <PriorityTo>${priorityTo}</PriorityTo>
-      </GetAlarmEventsFilter>
+      </GetAlarmEventsFilter>`
+    : "<GetAlarmEventsFilter />";
+  const soapPrefix = soapVersion === "1.1" ? "soap" : "soap12";
+  const soapNamespace = soapVersion === "1.1"
+    ? "http://schemas.xmlsoap.org/soap/envelope/"
+    : "http://www.w3.org/2003/05/soap-envelope";
+
+  return `<?xml version="1.0" encoding="utf-8"?>
+<${soapPrefix}:Envelope xmlns:${soapPrefix}="${soapNamespace}">
+  ${buildSoapAddressingHeader(soapPrefix, GET_ALARM_EVENTS_ACTION, endpointUrl)}
+  <${soapPrefix}:Body>
+    <GetAlarmEventsRequest xmlns="${EWS_NAMESPACE}">
+      ${parameterXml}
+      ${filterXml}
     </GetAlarmEventsRequest>
-  </soap12:Body>
-</soap12:Envelope>`;
+  </${soapPrefix}:Body>
+</${soapPrefix}:Envelope>`;
+}
+
+function buildGetWebServiceInformationEnvelope(options = {}) {
+  const soapVersion = options.soapVersion || "1.2";
+  const endpointUrl = options.endpointUrl || "";
+  const soapPrefix = soapVersion === "1.1" ? "soap" : "soap12";
+  const soapNamespace = soapVersion === "1.1"
+    ? "http://schemas.xmlsoap.org/soap/envelope/"
+    : "http://www.w3.org/2003/05/soap-envelope";
+
+  return `<?xml version="1.0" encoding="utf-8"?>
+<${soapPrefix}:Envelope xmlns:${soapPrefix}="${soapNamespace}">
+  ${buildSoapAddressingHeader(soapPrefix, GET_WEB_SERVICE_INFORMATION_ACTION, endpointUrl)}
+  <${soapPrefix}:Body>
+    <GetWebServiceInformationRequest xmlns="${EWS_NAMESPACE}" />
+  </${soapPrefix}:Body>
+</${soapPrefix}:Envelope>`;
+}
+
+function buildSoapAddressingHeader(soapPrefix, action, endpointUrl) {
+  return `<${soapPrefix}:Header>
+    <wsa:Action xmlns:wsa="http://www.w3.org/2005/08/addressing">${escapeXml(action)}</wsa:Action>
+    <wsa:To xmlns:wsa="http://www.w3.org/2005/08/addressing">${escapeXml(endpointUrl)}</wsa:To>
+  </${soapPrefix}:Header>`;
 }
 
 function escapeXml(value) {
@@ -201,14 +316,27 @@ function escapeXml(value) {
 function getPriorityRange(priorityFilter = []) {
   const values = priorityFilter.map((priority) => String(priority).toLowerCase());
 
-  if (values.includes("low")) return { priorityFrom: 0, priorityTo: 255 };
-  if (values.includes("medium")) return { priorityFrom: 0, priorityTo: 200 };
+  if (!values.length || values.includes("all") || values.includes("low")) return { priorityFrom: 0, priorityTo: 500 };
+  if (values.includes("medium")) return { priorityFrom: 0, priorityTo: 500 };
   if (values.includes("high")) return { priorityFrom: 0, priorityTo: 100 };
   return { priorityFrom: 0, priorityTo: 50 };
 }
 
 function parseAlarmEvents(xml) {
   return parseAlarmEventsResponse(xml).alarms;
+}
+
+function parseWebServiceInformationResponse(xml) {
+  const parsed = xmlParser.parse(xml);
+  const body = parsed.Envelope?.Body || parsed.Body;
+  const response = body?.GetWebServiceInformationResponse || {};
+  const version = response.GetWebServiceInformationVersion || {};
+  const operations = response.GetWebServiceInformationSupportedOperations?.Operation || [];
+
+  return {
+    version,
+    operations: Array.isArray(operations) ? operations : [operations].filter(Boolean)
+  };
 }
 
 function parseAlarmEventsResponse(xml) {
@@ -255,7 +383,7 @@ function mapEwsPriority(priority) {
   if (!Number.isFinite(priority)) return "Unknown";
   if (priority <= 50) return "Critical";
   if (priority <= 100) return "High";
-  if (priority <= 200) return "Medium";
+  if (priority <= 500) return "Medium";
   return "Low";
 }
 
@@ -320,6 +448,7 @@ function getLikelyCause(statusCode, axiosCode) {
   if (statusCode === 401) return "EWS rejected the username/password or Digest authorization.";
   if (statusCode === 403) return "The account authenticated but does not have EWS alarm permissions.";
   if (statusCode === 404) return "The EWS endpoint path was not found.";
+  if (statusCode === 400) return "EWS rejected the SOAP envelope, SOAP action, request version, or endpoint URL.";
   if (statusCode >= 500) return "EBO returned a server error while processing the SOAP request.";
   if (axiosCode === "ECONNABORTED") return "The EWS SOAP request timed out.";
   if (axiosCode === "ENOTFOUND") return "The EBO host could not be resolved.";
@@ -331,12 +460,14 @@ function getNextStep(statusCode, axiosCode) {
   if (statusCode === 401) return "Verify the EWS user credentials. Use the same username format that worked in the browser prompt.";
   if (statusCode === 403) return "Grant the account permission to browse/read EWS alarms in EBO.";
   if (statusCode === 404) return "Use the full EWS URL, for example https://10.0.11.158/EcoStruxure/DataExchange.";
+  if (statusCode === 400) return "Open the EWS URL in a browser to confirm it is the DataExchange endpoint, then check whether this EBO version expects SOAP 1.1/1.2 or a different GetAlarmEvents request shape.";
   if (axiosCode === "ECONNABORTED") return "Confirm VPN stays connected and EBO responds from this machine.";
   return "Check VPN, EBO EWS Server Configuration, account permissions, and the EWS URL.";
 }
 
 module.exports = {
   fetchEwsAlarmEvents,
+  fetchEwsWebServiceInformation,
   buildDigestAuthorizationHeader,
   buildGetAlarmEventsEnvelope,
   parseAlarmEvents,

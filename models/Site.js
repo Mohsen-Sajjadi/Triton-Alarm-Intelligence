@@ -8,7 +8,7 @@ const siteSchema = new mongoose.Schema(
     eboVersion: { type: String },
     connectionType: {
       type: String,
-      enum: ["Enterprise Server", "AS-P Direct", "SmartConnectorREST", "EBO EWS SOAP", "Unknown"],
+      enum: ["Enterprise Server", "AS-P Direct", "SmartConnectorREST", "EBO EWS SOAP", "EBO WebStation", "Unknown"],
       default: "Unknown"
     },
     serverUrl: { type: String },

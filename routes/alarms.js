@@ -18,9 +18,20 @@ router.get("/", async (req, res) => {
 // Get active alarms.
 router.get("/active", async (req, res) => {
   try {
-    const alarms = await Alarm.find({
+    const query = {
       state: { $in: ["Active", "Acknowledged"] }
-    }).sort({ occurredAt: -1 });
+    };
+
+    if (req.query.siteId) {
+      query.siteId = req.query.siteId;
+    }
+
+    const limit = Math.min(Number(req.query.limit || 1000), 5000);
+    const alarms = await Alarm.find(query).sort({
+      occurredAt: -1,
+      "rawData.SEQNO": -1,
+      updatedAt: -1
+    }).limit(limit);
 
     res.json(alarms);
   } catch (error) {

@@ -1,7 +1,9 @@
 const express = require("express");
 const Site = require("../models/Site");
 const { fetchActiveAlarms } = require("../connectors/eboAlarmConnector");
-const { upsertAlarm } = require("../services/alarmCollector");
+const { fetchEwsWebServiceInformation } = require("../connectors/eboEwsSoapConnector");
+const { testWebStationAccess } = require("../connectors/eboWebStationConnector");
+const { reconcileActiveAlarms, upsertAlarm } = require("../services/alarmCollector");
 
 const router = express.Router();
 
@@ -78,6 +80,7 @@ router.post("/:siteId/test-connection", async (req, res) => {
     return res.json({
       ok: true,
       alarmCount: alarms.length,
+      connector: alarms[0]?.rawData?.connector || site.connectionType,
       sampleAlarms: alarms.slice(0, 10)
     });
   } catch (error) {
@@ -98,6 +101,47 @@ router.post("/:siteId/test-connection", async (req, res) => {
   }
 });
 
+router.post("/:siteId/test-ews-info", async (req, res) => {
+  try {
+    const site = await Site.findOne({ siteId: req.params.siteId }).lean();
+
+    if (!site) {
+      return res.status(404).json({ error: "Site not found" });
+    }
+
+    const result = await fetchEwsWebServiceInformation(site);
+    return res.json({
+      ok: true,
+      ...result
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: error.message,
+      diagnostic: error.diagnostic
+    });
+  }
+});
+
+router.post("/:siteId/test-webstation", async (req, res) => {
+  try {
+    const site = await Site.findOne({ siteId: req.params.siteId }).lean();
+
+    if (!site) {
+      return res.status(404).json({ error: "Site not found" });
+    }
+
+    const result = await testWebStationAccess(site);
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: error.message,
+      diagnostic: error.diagnostic
+    });
+  }
+});
+
 router.post("/:siteId/fetch-alarms", async (req, res) => {
   try {
     const site = await Site.findOne({ siteId: req.params.siteId }).lean();
@@ -107,6 +151,7 @@ router.post("/:siteId/fetch-alarms", async (req, res) => {
     }
 
     const alarms = await fetchActiveAlarms(site, { throwOnError: true });
+    const reconciliation = await reconcileActiveAlarms(site, alarms);
     const saved = [];
 
     for (const alarm of alarms) {
@@ -124,7 +169,7 @@ router.post("/:siteId/fetch-alarms", async (req, res) => {
       {
         lastAlarmPollAt: new Date(),
         lastAlarmPollOk: true,
-        lastAlarmPollMessage: `Fetched ${alarms.length} alarms and saved ${saved.length}.`,
+        lastAlarmPollMessage: `Fetched ${alarms.length} alarms, saved ${saved.length}, closed ${reconciliation.returnedToNormal}.`,
         lastAlarmCount: alarms.length
       }
     );
@@ -133,6 +178,8 @@ router.post("/:siteId/fetch-alarms", async (req, res) => {
       ok: true,
       fetched: alarms.length,
       saved: saved.length,
+      returnedToNormal: reconciliation.returnedToNormal,
+      connector: alarms[0]?.rawData?.connector || site.connectionType,
       sampleAlarms: alarms.slice(0, 10)
     });
   } catch (error) {

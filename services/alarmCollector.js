@@ -15,6 +15,7 @@ async function collectAlarms() {
 
     const alarms = await fetchActiveAlarms(site);
     await updatePollStatus(site, true, `Fetched ${alarms.length} alarms`, alarms.length);
+    await reconcileActiveAlarms(site, alarms);
 
     for (const alarm of alarms) {
       const allowedPriority =
@@ -98,8 +99,41 @@ async function upsertAlarm(alarmData) {
   return newAlarm;
 }
 
+async function reconcileActiveAlarms(site, currentAlarms) {
+  if (!site?.siteId) return { returnedToNormal: 0 };
+
+  const currentKeys = new Set(currentAlarms.map(getAlarmKey));
+  const activeAlarms = await Alarm.find({
+    siteId: site.siteId,
+    state: { $in: ["Active", "Acknowledged"] }
+  });
+
+  let returnedToNormal = 0;
+  for (const alarm of activeAlarms) {
+    if (currentKeys.has(getAlarmKey(alarm))) continue;
+
+    alarm.state = "ReturnedToNormal";
+    alarm.returnedToNormalAt = new Date();
+    await alarm.save();
+    returnedToNormal += 1;
+  }
+
+  return { returnedToNormal };
+}
+
+function getAlarmKey(alarm) {
+  const occurredAt = alarm.occurredAt ? new Date(alarm.occurredAt).getTime() : "";
+  return [
+    alarm.siteId || "",
+    alarm.sourcePath || "",
+    alarm.alarmName || "",
+    Number.isNaN(occurredAt) ? "" : occurredAt
+  ].join("|");
+}
+
 module.exports = {
   collectAlarms,
   getPollingSites,
-  upsertAlarm
+  upsertAlarm,
+  reconcileActiveAlarms
 };

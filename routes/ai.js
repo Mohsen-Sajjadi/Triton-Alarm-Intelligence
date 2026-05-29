@@ -1,60 +1,83 @@
 const express = require("express");
-const Alarm = require("../models/Alarm");
 const AiRecommendation = require("../models/AiRecommendation");
+const { analyzeAlarm, analyzeSite } = require("../services/aiAlarmAnalysisService");
 
 const router = express.Router();
 
-router.post("/summarize-alarm", async (req, res) => {
+router.get("/recommendations", async (req, res) => {
+  try {
+    const query = {};
+    if (req.query.siteId) query.siteId = req.query.siteId;
+    if (req.query.alarmId) query.alarmId = req.query.alarmId;
+
+    const recommendations = await AiRecommendation.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Math.min(Number(req.query.limit || 50), 200));
+
+    return res.json(recommendations);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/analyze-alarm", async (req, res) => {
   try {
     const { alarmId } = req.body;
-
     if (!alarmId) {
       return res.status(400).json({ error: "alarmId is required" });
     }
 
-    const alarm = await Alarm.findById(alarmId);
-
-    if (!alarm) {
-      return res.status(404).json({ error: "Alarm not found" });
-    }
-
-    const recommendation = await AiRecommendation.create({
-      siteId: alarm.siteId,
-      clientName: alarm.clientName,
-      siteName: alarm.siteName,
-      equipmentName: alarm.equipmentName,
-      issueType: "Alarm Summary",
-      alarmId: alarm._id,
-      aiSummary: `${alarm.equipmentName || "Equipment"} has a ${alarm.priority || "priority"} alarm: ${alarm.alarmName}. Current state is ${alarm.state}.`,
-      recommendedAction: buildRecommendedAction(alarm),
-      confidence: "Medium"
-    });
-
+    const recommendation = await analyzeAlarm(alarmId, req.body);
     return res.status(201).json(recommendation);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(error.statusCode || 500).json({ error: error.message });
+  }
+});
+
+router.post("/summarize-alarm", async (req, res) => {
+  try {
+    const { alarmId } = req.body;
+    if (!alarmId) {
+      return res.status(400).json({ error: "alarmId is required" });
+    }
+
+    const recommendation = await analyzeAlarm(alarmId, req.body);
+    return res.status(201).json(recommendation);
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ error: error.message });
   }
 });
 
 router.post("/recommend-action", async (req, res) => {
   try {
     const { alarmId } = req.body;
-
     if (!alarmId) {
       return res.status(400).json({ error: "alarmId is required" });
     }
 
-    const alarm = await Alarm.findById(alarmId);
-
-    if (!alarm) {
-      return res.status(404).json({ error: "Alarm not found" });
-    }
-
+    const recommendation = await analyzeAlarm(alarmId, req.body);
     return res.json({
       alarmId,
-      recommendedAction: buildRecommendedAction(alarm),
-      confidence: "Medium"
+      recommendedAction: recommendation.recommendedAction,
+      likelyCause: recommendation.likelyCause,
+      urgency: recommendation.urgency,
+      technicianRequired: recommendation.technicianRequired,
+      confidence: recommendation.confidence
     });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ error: error.message });
+  }
+});
+
+router.post("/analyze-site", async (req, res) => {
+  try {
+    const { siteId } = req.body;
+    if (!siteId) {
+      return res.status(400).json({ error: "siteId is required" });
+    }
+
+    const analysis = await analyzeSite(siteId, req.body);
+    return res.json(analysis);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -67,27 +90,17 @@ router.post("/monthly-report", async (req, res) => {
 });
 
 router.post("/root-cause-analysis", async (req, res) => {
-  res.status(501).json({
-    error: "Root-cause grouping is planned for a later phase."
-  });
+  try {
+    const { siteId } = req.body;
+    if (!siteId) {
+      return res.status(400).json({ error: "siteId is required" });
+    }
+
+    const analysis = await analyzeSite(siteId, req.body);
+    return res.json(analysis);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 });
-
-function buildRecommendedAction(alarm) {
-  const text = `${alarm.alarmName} ${alarm.message || ""}`.toLowerCase();
-
-  if (text.includes("fan")) {
-    return "Verify fan command and status, check VFD fault history, confirm airflow proof, and inspect starter or belt locally.";
-  }
-
-  if (text.includes("temp") || text.includes("temperature")) {
-    return "Confirm sensor reading, compare against a field measurement, review setpoint, and check valve or damper response.";
-  }
-
-  if (text.includes("communication") || text.includes("offline")) {
-    return "Check controller power, network connection, BACnet communication status, and recent device restarts.";
-  }
-
-  return "Review the EBO alarm details, confirm current equipment status, and check related command, status, sensor, and schedule points.";
-}
 
 module.exports = router;
