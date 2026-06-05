@@ -1,7 +1,7 @@
 {
   "name": "triton-data-bridge",
   "version": "1.0.0",
-  "description": "Triton Data Bridge for collecting Schneider EBO/SmartConnector alarms and point data into MongoDB.",
+  "description": "Triton AI Alarm Insights for collecting Schneider EBO/SmartConnector alarms and point data into MongoDB.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Triton Alarm Bridge Admin</title>
+    <title>Triton AI Alarm Insights</title>
     <style>
       :root {
         color-scheme: light;
@@ -25,6 +25,7 @@
         --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
         --shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.06);
         --focus: 0 0 0 3px rgba(7, 89, 133, 0.16);
+        --topbar: #0f172a;
       }
 
       * {
@@ -34,48 +35,119 @@
       body {
         margin: 0;
         background:
-          linear-gradient(180deg, #eef3f7 0, var(--bg) 230px),
+          linear-gradient(180deg, #eef3f7 0, var(--bg) 210px),
           var(--bg);
         color: var(--ink);
-        font-size: 15px;
+        font-size: 14px;
       }
 
       header {
-        background: rgba(255, 255, 255, 0.9);
-        border-bottom: 1px solid var(--border);
-        padding: 14px 22px;
+        align-items: center;
+        background: var(--topbar);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 58px;
+        padding: 10px 18px;
         position: sticky;
         top: 0;
         z-index: 10;
-        backdrop-filter: blur(12px);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
       }
 
       h1 {
         margin: 0;
-        font-size: 21px;
+        font-size: 17px;
+        letter-spacing: 0;
+        line-height: 1.2;
+      }
+
+      .header-meta {
+        color: #bdd7e7;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .brand-lockup {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: #075985;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        display: grid;
+        flex: 0 0 36px;
+        font-size: 13px;
+        font-weight: 800;
+        height: 36px;
+        justify-items: center;
+        width: 36px;
+      }
+
+      .brand-text {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .app-nav {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .app-nav a {
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: #d8e8f3;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 7px 9px;
+        text-decoration: none;
+      }
+
+      .app-nav a.active,
+      .app-nav a:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
       }
 
       main {
         display: grid;
-        grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
-        gap: 16px;
-        padding: 16px;
+        grid-template-columns: minmax(280px, 374px) minmax(0, 1fr);
+        gap: 0;
+        min-height: calc(100vh - 58px);
+        padding: 0;
       }
 
       section,
       aside {
         background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        box-shadow: var(--shadow-soft);
       }
 
       aside {
-        padding: 12px;
+        align-self: start;
+        border-right: 1px solid var(--border);
+        box-shadow: 12px 0 30px rgba(15, 23, 42, 0.04);
+        max-height: calc(100vh - 58px);
+        overflow: auto;
+        padding: 14px;
+        position: sticky;
+        top: 58px;
       }
 
       section {
-        padding: 14px;
+        border-left: 1px solid #edf1f6;
+        min-height: calc(100vh - 58px);
+        padding: 0;
       }
 
       h2,
@@ -84,16 +156,16 @@
       }
 
       h2 {
-        font-size: 17px;
+        font-size: 16px;
       }
 
       h3 {
-        font-size: 15px;
+        font-size: 14px;
       }
 
       p {
         color: var(--muted);
-        font-size: 13px;
+        font-size: 12px;
         line-height: 1.35;
         margin: 5px 0 0;
       }
@@ -102,7 +174,7 @@
         display: block;
         margin: 7px 0 4px;
         color: #34455a;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
       }
 
@@ -116,7 +188,7 @@
         background: #ffffff;
         padding: 7px 9px;
         font: inherit;
-        font-size: 14px;
+        font-size: 13px;
         transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
       }
 
@@ -152,7 +224,7 @@
         color: #ffffff;
         cursor: pointer;
         font: inherit;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
         padding: 7px 11px;
         transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, color 140ms ease, transform 140ms ease;
@@ -270,7 +342,7 @@
       .toolbar {
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 9px;
+        margin-bottom: 10px;
       }
 
       .actions {
@@ -287,6 +359,8 @@
         background: #ffffff;
         border-color: var(--border);
         color: var(--ink);
+        font-size: 12px;
+        line-height: 1.25;
         text-align: left;
         padding: 9px 30px 9px 10px;
         position: relative;
@@ -319,9 +393,14 @@
         display: block;
       }
 
+      .site-button strong {
+        font-size: 13px;
+        line-height: 1.28;
+      }
+
       .site-button span {
         color: var(--muted);
-        font-size: 12px;
+        font-size: 11px;
         margin-top: 3px;
       }
 
@@ -409,6 +488,194 @@
         margin-bottom: 10px;
         padding: 10px;
         background: var(--panel-soft);
+      }
+
+      .tab-bar {
+        align-items: center;
+        background: #ffffff;
+        border-bottom: 1px solid var(--border);
+        display: none;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0;
+        padding: 9px 14px 0;
+      }
+
+      .tab-button {
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 8px 8px 0 0;
+        color: var(--muted);
+        min-height: 34px;
+        padding: 7px 11px;
+      }
+
+      .tab-button:hover:not(:disabled) {
+        background: var(--panel-soft);
+        box-shadow: none;
+        color: var(--ink);
+        transform: none;
+      }
+
+      .tab-button.active {
+        background: var(--panel);
+        border-color: var(--border);
+        border-bottom-color: var(--panel);
+        color: var(--primary);
+      }
+
+      .tab-panel {
+        display: none;
+        padding: 14px;
+      }
+
+      .tab-panel.active {
+        display: block;
+      }
+
+      .metric-grid,
+      .test-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin-bottom: 10px;
+      }
+
+      .metric,
+      .test-result-card {
+        background: linear-gradient(180deg, #ffffff 0, var(--panel-soft) 100%);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-width: 0;
+        padding: 10px 11px;
+      }
+
+      .metric[data-dashboard-detail] {
+        cursor: pointer;
+        transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+      }
+
+      .metric[data-dashboard-detail]:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-soft);
+        transform: translateY(-1px);
+      }
+
+      .metric[data-dashboard-detail]:focus-visible {
+        border-color: var(--primary);
+        box-shadow: var(--focus);
+        outline: none;
+      }
+
+      .metric span,
+      .test-result-card span {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 21px;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+      }
+
+      .metric.status-ok {
+        border-left: 3px solid var(--ok);
+      }
+
+      .metric.status-error {
+        border-left: 3px solid var(--danger);
+      }
+
+      .metric.status-info {
+        border-left: 3px solid var(--primary);
+      }
+
+      .site-summary-grid .metric strong,
+      .test-result-card strong {
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .test-result-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .test-result-card.ok {
+        border-color: #9bd9b7;
+        color: var(--ink);
+      }
+
+      .test-result-card.error {
+        border-color: #f0b8b3;
+        color: var(--ink);
+      }
+
+      .site-summary-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .detail-panel {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-top: 12px;
+        overflow: hidden;
+      }
+
+      .detail-panel-header {
+        align-items: center;
+        background: var(--panel-soft);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 11px;
+      }
+
+      .detail-panel-header strong {
+        font-size: 13px;
+      }
+
+      .detail-panel-body {
+        display: grid;
+        gap: 0;
+      }
+
+      .detail-row {
+        display: grid;
+        gap: 4px;
+        padding: 9px 11px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .detail-row:last-child {
+        border-bottom: 0;
+      }
+
+      .detail-row-title {
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+
+      .detail-row-meta {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+      }
+
+      .detail-row-actions {
+        margin-top: 4px;
       }
 
       .status-line {
@@ -625,12 +892,27 @@
       }
 
       @media (max-width: 980px) {
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .app-nav {
+          overflow-x: auto;
+          width: 100%;
+        }
+
         main {
           grid-template-columns: 1fr;
         }
 
         .site-rail {
           order: -1;
+        }
+
+        aside {
+          max-height: none;
+          position: static;
         }
 
         .form-grid {
@@ -644,6 +926,12 @@
         .ai-grid {
           grid-template-columns: 1fr;
         }
+
+        .metric-grid,
+        .test-grid,
+        .site-summary-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
       }
 
       @media (max-width: 680px) {
@@ -651,6 +939,16 @@
         main {
           padding-left: 14px;
           padding-right: 14px;
+        }
+
+        .brand-mark {
+          flex-basis: 32px;
+          height: 32px;
+          width: 32px;
+        }
+
+        h1 {
+          font-size: 15px;
         }
 
         .toolbar,
@@ -673,12 +971,30 @@
           align-items: flex-start;
           flex-direction: column;
         }
+
+        .metric-grid,
+        .test-grid,
+        .site-summary-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
   <body>
     <header>
-      <h1>Triton Alarm Bridge Admin</h1>
+      <div class="brand-lockup">
+        <div class="brand-mark">TA</div>
+        <div class="brand-text">
+          <h1>Triton AI Alarm Insights</h1>
+          <div class="header-meta">Alarm intelligence and site operations</div>
+        </div>
+      </div>
+      <nav class="app-nav" aria-label="App navigation">
+        <a class="active" href="#dashboardPanel">Insights</a>
+        <a href="#testsPanel">Tests</a>
+        <a href="#workspacePanel">Alarms</a>
+        <a href="#setupPanel">Sites</a>
+      </nav>
     </header>
 
     <main>
@@ -715,73 +1031,182 @@
       </aside>
 
       <section>
-        <div class="toolbar">
-          <div>
-            <h2>Alarm Workspace</h2>
-            <p id="selectedSiteLabel">Select a site to test the connection, fetch alarms, and review active issues.</p>
+        <div class="tab-bar" role="tablist" aria-label="Alarm bridge workspace">
+          <button type="button" class="tab-button active" data-tab="dashboard">Insights</button>
+          <button type="button" class="tab-button" data-tab="tests">Tests</button>
+          <button type="button" class="tab-button" data-tab="workspace">Alarms</button>
+          <button type="button" class="tab-button" data-tab="setup">Sites</button>
+        </div>
+
+        <div class="tab-panel active" id="dashboardPanel">
+          <div class="toolbar">
+            <div>
+              <h2>Insights</h2>
+              <p id="selectedSiteLabel">Select a site to review alarms, run tests, and manage setup.</p>
+            </div>
+            <div class="actions" style="margin-top: 0">
+              <button type="button" class="secondary" id="dashboardRefreshButton">Refresh</button>
+              <button type="button" id="dashboardFetchAllButton">Fetch Polling Sites</button>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric status-info" data-dashboard-detail="saved-sites" role="button" tabindex="0">
+              <span>Saved Sites</span>
+              <strong id="metricSites">0</strong>
+            </div>
+            <div class="metric status-info" data-dashboard-detail="polling-sites" role="button" tabindex="0">
+              <span>Polling Sites</span>
+              <strong id="metricPolling">0</strong>
+            </div>
+            <div class="metric status-info" data-dashboard-detail="active-alarms" role="button" tabindex="0">
+              <span>Active Alarms</span>
+              <strong id="metricActiveAlarms">0</strong>
+            </div>
+            <div class="metric status-error" data-dashboard-detail="failed-tests" role="button" tabindex="0">
+              <span>Failed Tests</span>
+              <strong id="metricFailedTests">0</strong>
+            </div>
+          </div>
+
+          <div class="site-summary-grid">
+            <div class="metric status-info" data-dashboard-detail="selected-site" role="button" tabindex="0">
+              <span>Selected Site</span>
+              <strong id="selectedSiteName">None</strong>
+            </div>
+            <div class="metric status-info" data-dashboard-detail="connector" role="button" tabindex="0">
+              <span>Connector</span>
+              <strong id="selectedSiteConnector">-</strong>
+            </div>
+            <div class="metric" id="selectedSiteResultCard" data-dashboard-detail="last-result" role="button" tabindex="0">
+              <span>Last Result</span>
+              <strong id="selectedSiteResult">-</strong>
+            </div>
+          </div>
+          <div id="dashboardStatus" class="status"></div>
+          <div class="detail-panel" id="dashboardDetailPanel">
+            <div class="detail-panel-header">
+              <strong id="dashboardDetailTitle">Dashboard Details</strong>
+              <span class="pill ok" id="dashboardDetailCount">Ready</span>
+            </div>
+            <div class="detail-panel-body" id="dashboardDetailBody">
+              <div class="detail-row">
+                <div class="detail-row-title">Click any dashboard card to see the related sites, alarms, or test status.</div>
+                <div class="detail-row-meta">For example, click Failed Tests to see exactly which sites failed and what message was returned.</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="steps">
-          <div class="step">
-            <div class="step-header">
-              <div class="step-number">1</div>
-              <div>
-                <h3>Test the connection</h3>
-                <p>This verifies the server can reach the selected gateway and authenticate. A zero alarm count can still be valid if no active alarms exist.</p>
-              </div>
+        <div class="tab-panel" id="testsPanel">
+          <div class="toolbar">
+            <div>
+              <h2>Tests</h2>
+              <p>Run checks here. The page shows pass/fail results and the next useful action.</p>
             </div>
-            <div class="actions">
-              <button type="button" class="secondary" id="testWebStationButton">Test WebStation</button>
-              <button type="button" class="secondary" id="testEwsInfoButton">Test EWS</button>
-              <button type="button" id="testButton">Test Connection</button>
+            <div class="actions" style="margin-top: 0">
+              <button type="button" id="runAutoTestButton">Run Selected Test</button>
+              <button type="button" class="secondary" id="testAllButton">Test All Sites</button>
             </div>
-            <div id="testStatus" class="status"></div>
-            <div id="testResult" class="result-box"></div>
           </div>
 
-          <div class="step">
-            <div class="step-header">
-              <div class="step-number">2</div>
-              <div>
-                <h3>Fetch and review alarms</h3>
-                <p>Use this after the connection test succeeds. It saves matching alarms into MongoDB and refreshes the table below.</p>
-              </div>
+          <div class="test-grid">
+            <div class="test-result-card">
+              <span>Selected Site</span>
+              <strong id="testSelectedSite">None</strong>
             </div>
-            <div class="actions">
-              <button type="button" id="fetchButton">Fetch And Save Alarms</button>
+            <div class="test-result-card">
+              <span>Recommended Test</span>
+              <strong id="recommendedTest">-</strong>
+            </div>
+            <div class="test-result-card">
+              <span>Last Count</span>
+              <strong id="testAlarmCount">-</strong>
+            </div>
+            <div class="test-result-card">
+              <span>Last Status</span>
+              <strong id="testLastStatus">Not run</strong>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="secondary" id="testWebStationButton">Test WebStation</button>
+            <button type="button" class="secondary" id="testEwsInfoButton">Test EWS</button>
+            <button type="button" class="secondary" id="testButton">Test Connection</button>
+          </div>
+          <div id="testStatus" class="status"></div>
+          <div id="testResultsList" class="test-result-list"></div>
+          <div id="testResult" class="result-box"></div>
+        </div>
+
+        <div class="tab-panel" id="workspacePanel">
+          <div class="toolbar">
+            <div>
+              <h2>Alarms</h2>
+              <p>Review active alarms, refresh from the selected site, and create analysis output when needed.</p>
+            </div>
+            <div class="actions" style="margin-top: 0">
+              <button type="button" id="fetchButton">Fetch Selected Site</button>
               <button type="button" class="secondary" id="refreshAlarmsButton">Refresh From EBO</button>
               <button type="button" class="secondary" id="analyzeSiteButton">Analyze Site</button>
             </div>
-            <div id="alarmStatus" class="status"></div>
-            <div class="table-shell">
-              <table class="alarm-table">
-                <colgroup>
-                  <col style="width: 18%">
-                  <col style="width: 22%">
-                  <col style="width: 21%">
-                  <col style="width: 10%">
-                  <col style="width: 8%">
-                  <col style="width: 7%">
-                  <col style="width: 7%">
-                  <col style="width: 7%">
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th>Alarm</th>
-                    <th>Source</th>
-                    <th>Alarm Text</th>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>State</th>
-                    <th>Alarm Time</th>
-                    <th>Last Seen</th>
-                  </tr>
-                </thead>
-                <tbody id="alarmRows"></tbody>
-              </table>
+          </div>
+          <div id="alarmStatus" class="status"></div>
+          <div class="table-shell">
+            <table class="alarm-table">
+              <colgroup>
+                <col style="width: 18%">
+                <col style="width: 22%">
+                <col style="width: 21%">
+                <col style="width: 10%">
+                <col style="width: 8%">
+                <col style="width: 7%">
+                <col style="width: 7%">
+                <col style="width: 7%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Alarm</th>
+                  <th>Source</th>
+                  <th>Alarm Text</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>State</th>
+                  <th>Alarm Time</th>
+                  <th>Last Seen</th>
+                </tr>
+              </thead>
+              <tbody id="alarmRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="setupPanel">
+          <div class="toolbar">
+            <div>
+              <h2>Sites</h2>
+              <p>Keep connection details, polling, priorities, and notes separate from daily alarm review.</p>
+            </div>
+            <div class="actions" style="margin-top: 0">
+              <button type="button" id="editSelectedSiteButton">Edit Selected Site</button>
+              <button type="button" class="secondary" id="newSiteTabButton">New Site</button>
             </div>
           </div>
+          <div class="site-summary-grid">
+            <div class="metric">
+              <span>Site ID</span>
+              <strong id="setupSiteId">-</strong>
+            </div>
+            <div class="metric">
+              <span>Base URL</span>
+              <strong id="setupBaseUrl">-</strong>
+            </div>
+            <div class="metric">
+              <span>Polling</span>
+              <strong id="setupPolling">-</strong>
+            </div>
+          </div>
+          <div id="formStatus" class="status"></div>
         </div>
       </section>
     </main>
@@ -885,6 +1310,30 @@
                 <label for="alarmPriorityFilter">Alarm Priorities</label>
                 <input id="alarmPriorityFilter" name="alarmPriorityFilter" form="siteForm" placeholder="Critical,High">
               </div>
+              <div class="field">
+                <label for="pollIntervalMinutes">Poll Every</label>
+                <input id="pollIntervalMinutes" name="pollIntervalMinutes" form="siteForm" type="number" min="1" step="1" placeholder="5">
+              </div>
+              <div class="field">
+                <label for="pollStartTime">Start Time</label>
+                <input id="pollStartTime" name="pollStartTime" form="siteForm" type="time">
+              </div>
+              <div class="field">
+                <label for="pollEndTime">End Time</label>
+                <input id="pollEndTime" name="pollEndTime" form="siteForm" type="time">
+              </div>
+              <div class="field">
+                <label>Active Days</label>
+                <div class="compact-row" style="gap: 8px; margin-top: 0">
+                  <div class="check-row"><input class="poll-day" data-day="1" form="siteForm" type="checkbox"><label>Mon</label></div>
+                  <div class="check-row"><input class="poll-day" data-day="2" form="siteForm" type="checkbox"><label>Tue</label></div>
+                  <div class="check-row"><input class="poll-day" data-day="3" form="siteForm" type="checkbox"><label>Wed</label></div>
+                  <div class="check-row"><input class="poll-day" data-day="4" form="siteForm" type="checkbox"><label>Thu</label></div>
+                  <div class="check-row"><input class="poll-day" data-day="5" form="siteForm" type="checkbox"><label>Fri</label></div>
+                  <div class="check-row"><input class="poll-day" data-day="6" form="siteForm" type="checkbox"><label>Sat</label></div>
+                  <div class="check-row"><input class="poll-day" data-day="0" form="siteForm" type="checkbox"><label>Sun</label></div>
+                </div>
+              </div>
             </div>
 
             <div class="compact-row">
@@ -897,7 +1346,7 @@
                 <label for="pollingEnabled">Poll automatically</label>
               </div>
             </div>
-            <div id="formStatus" class="status"></div>
+            <div id="formModalStatus" class="status"></div>
           </div>
         </div>
 
@@ -939,7 +1388,8 @@
       const state = {
         sites: [],
         selectedSiteId: "",
-        activeAlarms: []
+        activeAlarms: [],
+        lastTestResults: []
       };
 
       const siteForm = document.getElementById("siteForm");
@@ -968,6 +1418,26 @@
       const aiModalSubtitle = document.getElementById("aiModalSubtitle");
       const aiModalBody = document.getElementById("aiModalBody");
       const closeAiModalButton = document.getElementById("closeAiModalButton");
+      const dashboardStatus = document.getElementById("dashboardStatus");
+      const metricSites = document.getElementById("metricSites");
+      const metricPolling = document.getElementById("metricPolling");
+      const metricActiveAlarms = document.getElementById("metricActiveAlarms");
+      const metricFailedTests = document.getElementById("metricFailedTests");
+      const selectedSiteName = document.getElementById("selectedSiteName");
+      const selectedSiteConnector = document.getElementById("selectedSiteConnector");
+      const selectedSiteResult = document.getElementById("selectedSiteResult");
+      const selectedSiteResultCard = document.getElementById("selectedSiteResultCard");
+      const testSelectedSite = document.getElementById("testSelectedSite");
+      const recommendedTest = document.getElementById("recommendedTest");
+      const testAlarmCount = document.getElementById("testAlarmCount");
+      const testLastStatus = document.getElementById("testLastStatus");
+      const testResultsList = document.getElementById("testResultsList");
+      const setupSiteId = document.getElementById("setupSiteId");
+      const setupBaseUrl = document.getElementById("setupBaseUrl");
+      const setupPolling = document.getElementById("setupPolling");
+      const dashboardDetailTitle = document.getElementById("dashboardDetailTitle");
+      const dashboardDetailCount = document.getElementById("dashboardDetailCount");
+      const dashboardDetailBody = document.getElementById("dashboardDetailBody");
       let pendingDeleteConfirm = null;
 
       async function api(path, options) {
@@ -984,22 +1454,226 @@
         return body;
       }
 
+      function getSelectedSite() {
+        return state.sites.find((site) => site.siteId === state.selectedSiteId) || null;
+      }
+
+      function switchTab(tabName) {
+        document.querySelectorAll(".tab-button").forEach((button) => {
+          button.classList.toggle("active", button.dataset.tab === tabName);
+        });
+        document.querySelectorAll(".tab-panel").forEach((panel) => {
+          panel.classList.toggle("active", panel.id === `${tabName}Panel`);
+        });
+        document.querySelectorAll(".app-nav a").forEach((link) => {
+          link.classList.toggle("active", link.getAttribute("href") === `#${tabName}Panel`);
+        });
+      }
+
+      function updateDashboard() {
+        const selectedSite = getSelectedSite();
+        const failedTests = state.sites.filter((site) => site.lastConnectionOk === false).length;
+        const pollingSites = state.sites.filter((site) => site.pollingEnabled).length;
+
+        metricSites.textContent = state.sites.length;
+        metricPolling.textContent = pollingSites;
+        metricActiveAlarms.textContent = state.activeAlarms.length;
+        metricFailedTests.textContent = failedTests;
+
+        selectedSiteName.textContent = selectedSite
+          ? `${selectedSite.clientName} - ${selectedSite.siteName}`
+          : "None";
+        selectedSiteConnector.textContent = selectedSite?.connectionType || "-";
+        selectedSiteResult.textContent =
+          selectedSite?.lastConnectionOk === true
+            ? "OK"
+            : selectedSite?.lastConnectionOk === false
+              ? "Failed"
+              : "Not tested";
+        selectedSiteResultCard.className =
+          selectedSite?.lastConnectionOk === true
+            ? "metric status-ok"
+            : selectedSite?.lastConnectionOk === false
+              ? "metric status-error"
+              : "metric status-info";
+
+        testSelectedSite.textContent = selectedSite
+          ? `${selectedSite.clientName} - ${selectedSite.siteName}`
+          : "None";
+        recommendedTest.textContent = selectedSite
+          ? getRecommendedTestLabel(selectedSite)
+          : "-";
+        testAlarmCount.textContent =
+          typeof selectedSite?.lastAlarmCount === "number" ? selectedSite.lastAlarmCount : "-";
+        testLastStatus.textContent = selectedSiteResult.textContent;
+
+        setupSiteId.textContent = selectedSite?.siteId || "-";
+        setupBaseUrl.textContent = selectedSite?.baseUrl || selectedSite?.serverUrl || "-";
+        setupPolling.textContent = selectedSite
+          ? selectedSite.pollingEnabled ? getPollScheduleLabel(selectedSite) : "Off"
+          : "-";
+      }
+
+      function getRecommendedTestLabel(site) {
+        if (site.connectionType === "EBO WebStation") return "WebStation access";
+        if (site.connectionType === "EBO EWS SOAP") return "EWS info, then alarm fetch";
+        return "Alarm endpoint";
+      }
+
+      function getPollScheduleLabel(site) {
+        const interval = Math.max(Number(site.pollIntervalMinutes || 5), 1);
+        const days = formatPollDays(site.pollDays);
+        const start = site.pollStartTime || "00:00";
+        const end = site.pollEndTime || "23:59";
+        return `Every ${interval} min | ${days} | ${start}-${end}`;
+      }
+
+      function formatPollDays(days) {
+        const values = Array.isArray(days) && days.length
+          ? days.map(Number).sort((a, b) => a - b)
+          : [0, 1, 2, 3, 4, 5, 6];
+        if (values.length === 7) return "Every day";
+        if (values.join(",") === "1,2,3,4,5") return "Weekdays";
+        if (values.join(",") === "0,6") return "Weekends";
+        const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        return values.map((day) => labels[day]).filter(Boolean).join(",");
+      }
+
+      function showDashboardDetail(type) {
+        const selectedSite = getSelectedSite();
+        const detailBuilders = {
+          "saved-sites": () => ({
+            title: "Saved Sites",
+            rows: state.sites.map(siteToDetailRow)
+          }),
+          "polling-sites": () => ({
+            title: "Polling Sites",
+            rows: state.sites.filter((site) => site.pollingEnabled).map(siteToDetailRow)
+          }),
+          "active-alarms": () => ({
+            title: selectedSite
+              ? `Active Alarms for ${selectedSite.clientName} - ${selectedSite.siteName}`
+              : "Active Alarms",
+            rows: state.activeAlarms.map(alarmToDetailRow)
+          }),
+          "failed-tests": () => ({
+            title: "Failed Tests",
+            rows: state.sites
+              .filter((site) => site.lastConnectionOk === false)
+              .map((site) => siteToDetailRow(site, site.lastConnectionMessage || "Last connection test failed."))
+          }),
+          "selected-site": () => ({
+            title: "Selected Site",
+            rows: selectedSite ? [siteToDetailRow(selectedSite)] : []
+          }),
+          connector: () => ({
+            title: "Connector",
+            rows: selectedSite
+              ? [siteToDetailRow(selectedSite, `Connection type: ${selectedSite.connectionType || "Unknown"}. Recommended test: ${getRecommendedTestLabel(selectedSite)}.`)]
+              : []
+          }),
+          "last-result": () => ({
+            title: "Last Result",
+            rows: selectedSite
+              ? [siteToDetailRow(selectedSite, selectedSite.lastConnectionMessage || "No last test message was saved.")]
+              : []
+          })
+        };
+
+        const detail = detailBuilders[type]?.() || { title: "Dashboard Details", rows: [] };
+        renderDashboardDetail(detail.title, detail.rows);
+      }
+
+      function renderDashboardDetail(title, rows) {
+        dashboardDetailTitle.textContent = title;
+        dashboardDetailCount.textContent = `${rows.length} item${rows.length === 1 ? "" : "s"}`;
+        dashboardDetailCount.className = rows.length ? "pill ok" : "pill error";
+
+        if (!rows.length) {
+          dashboardDetailBody.innerHTML = `
+            <div class="detail-row">
+              <div class="detail-row-title">No matching records.</div>
+              <div class="detail-row-meta">Nothing currently matches this dashboard section.</div>
+            </div>
+          `;
+          return;
+        }
+
+        dashboardDetailBody.innerHTML = rows.map((row) => `
+          <div class="detail-row">
+            <div class="detail-row-title">${escapeHtml(row.title)}</div>
+            <div class="detail-row-meta">${escapeHtml(row.meta)}</div>
+            ${row.note ? `<div class="detail-row-meta">${escapeHtml(row.note)}</div>` : ""}
+            ${row.siteId ? `<div class="detail-row-actions"><button type="button" class="secondary inline-action" data-detail-site-id="${escapeHtml(row.siteId)}">Open Site</button></div>` : ""}
+          </div>
+        `).join("");
+
+        dashboardDetailBody.querySelectorAll("[data-detail-site-id]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const site = state.sites.find((item) => item.siteId === button.dataset.detailSiteId);
+            if (site) setSiteForm(site);
+          });
+        });
+      }
+
+      function siteToDetailRow(site, note) {
+        const status =
+          site.lastConnectionOk === true
+            ? "last test ok"
+            : site.lastConnectionOk === false
+              ? "last test failed"
+              : "not tested";
+        return {
+          title: `${site.clientName || "Unknown Client"} - ${site.siteName || "Unknown Site"}`,
+          meta: [
+            `Site ID: ${site.siteId || "-"}`,
+            `Connector: ${site.connectionType || "Unknown"}`,
+            site.pollingEnabled ? getPollScheduleLabel(site) : "polling off",
+            status,
+            typeof site.lastAlarmCount === "number" ? `${site.lastAlarmCount} alarms last seen` : null
+          ].filter(Boolean).join(" | "),
+          note,
+          siteId: site.siteId
+        };
+      }
+
+      function alarmToDetailRow(alarm) {
+        return {
+          title: `${alarm.priority || "Unknown"} - ${alarm.alarmName || "Unknown Alarm"}`,
+          meta: [
+            `${alarm.clientName || ""} / ${alarm.siteName || ""}`,
+            `State: ${alarm.state || "Unknown"}`,
+            `Equipment: ${alarm.equipmentName || "Unknown"}`,
+            alarm.occurredAt ? `Time: ${new Date(alarm.occurredAt).toLocaleString()}` : null
+          ].filter(Boolean).join(" | "),
+          note: alarm.message || alarm.sourcePath || ""
+        };
+      }
+
       function clearForm() {
         siteForm.reset();
         document.getElementById("connectionType").value = "SmartConnectorREST";
         document.getElementById("alarmEndpointPath").value = "/alarms/active";
+        document.getElementById("pollIntervalMinutes").value = "5";
+        document.getElementById("pollStartTime").value = "00:00";
+        document.getElementById("pollEndTime").value = "23:59";
         document.getElementById("enabled").checked = true;
         document.getElementById("pollingEnabled").checked = false;
+        document.querySelectorAll(".poll-day").forEach((checkbox) => {
+          checkbox.checked = true;
+        });
         state.selectedSiteId = "";
-        selectedSiteLabel.textContent = "New site. Fill in the setup modal, then save.";
+        selectedSiteLabel.textContent = "Overview across connected sites. Select a site to focus the workspace.";
         clearResults();
         renderSites();
+        updateDashboard();
       }
 
       function clearResults() {
         formStatus.textContent = "";
         testStatus.textContent = "";
         testResult.textContent = "";
+        testResultsList.innerHTML = "";
         alarmStatus.textContent = "";
         alarmRows.innerHTML = "";
       }
@@ -1008,6 +1682,15 @@
         const data = Object.fromEntries(new FormData(siteForm).entries());
         data.enabled = document.getElementById("enabled").checked;
         data.pollingEnabled = document.getElementById("pollingEnabled").checked;
+        data.pollIntervalMinutes = Math.max(Number(data.pollIntervalMinutes || 5), 1);
+        data.pollStartTime = data.pollStartTime || "00:00";
+        data.pollEndTime = data.pollEndTime || "23:59";
+        data.pollDays = Array.from(document.querySelectorAll(".poll-day:checked"))
+          .map((checkbox) => Number(checkbox.dataset.day))
+          .sort((a, b) => a - b);
+        if (!data.pollDays.length) {
+          data.pollDays = [0, 1, 2, 3, 4, 5, 6];
+        }
         data.serverUrl = data.baseUrl;
         if (!data.ewsUrl && data.connectionType === "EBO EWS SOAP") {
           data.ewsUrl = `${data.baseUrl.replace(/\/+$/, "")}/EcoStruxure/DataExchange`;
@@ -1035,8 +1718,18 @@
           }
         }
         document.getElementById("baseUrl").value = site.baseUrl || site.serverUrl || "";
+        document.getElementById("pollIntervalMinutes").value = site.pollIntervalMinutes || 5;
+        document.getElementById("pollStartTime").value = site.pollStartTime || "00:00";
+        document.getElementById("pollEndTime").value = site.pollEndTime || "23:59";
+        const pollDays = Array.isArray(site.pollDays) && site.pollDays.length
+          ? site.pollDays.map(Number)
+          : [0, 1, 2, 3, 4, 5, 6];
+        document.querySelectorAll(".poll-day").forEach((checkbox) => {
+          checkbox.checked = pollDays.includes(Number(checkbox.dataset.day));
+        });
         selectedSiteLabel.textContent = `${site.clientName} - ${site.siteName}`;
         renderSites();
+        updateDashboard();
         loadAlarms().catch((error) => setStatus(alarmStatus, error.message, false));
       }
 
@@ -1045,13 +1738,14 @@
         state.sites = sites.filter((site) => site.siteId !== "pilot-site-001");
         renderSites();
         siteListStatus.textContent = `${state.sites.length} saved site${state.sites.length === 1 ? "" : "s"}`;
+        updateDashboard();
       }
 
       async function loadAppStatus() {
         try {
           const health = await api("/api/health");
           bridgeStatus.innerHTML = "<span class=\"pill ok\">Running</span>";
-          bridgeApp.textContent = health.app || "Triton Data Bridge";
+          bridgeApp.textContent = health.app || "Triton AI Alarm Insights";
           bridgeTime.textContent = health.time
             ? new Date(health.time).toLocaleString()
             : "-";
@@ -1081,7 +1775,7 @@
           button.innerHTML = [
             `<strong>${escapeHtml(site.clientName)} - ${escapeHtml(site.siteName)}</strong>`,
             `<span class="connector-line">${escapeHtml(site.connectionType || "Unknown")}</span>`,
-            `<span>${escapeHtml(site.siteId)} | ${site.pollingEnabled ? "polling on" : "polling off"} | ${site.lastConnectionOk === true ? "last test ok" : site.lastConnectionOk === false ? "last test failed" : "not tested"}</span>`
+            `<span>${escapeHtml(site.siteId)} | ${site.pollingEnabled ? escapeHtml(getPollScheduleLabel(site)) : "polling off"} | ${site.lastConnectionOk === true ? "last test ok" : site.lastConnectionOk === false ? "last test failed" : "not tested"}</span>`
           ].join("");
           button.addEventListener("click", () => setSiteForm(site));
           button.addEventListener("dblclick", () => {
@@ -1133,10 +1827,17 @@
           method: "POST"
         });
         setStatus(testStatus, `Connection OK by ${result.connector || "selected connector"}. Fetched ${result.alarmCount} alarms.`, true);
+        renderTestResults([{
+          ok: true,
+          siteId: state.selectedSiteId,
+          connector: result.connector,
+          alarmCount: result.alarmCount
+        }]);
         testResult.textContent = JSON.stringify({
           connector: result.connector,
           sampleAlarms: result.sampleAlarms
         }, null, 2);
+        await loadSites();
       }
 
       async function testEwsInfo() {
@@ -1147,6 +1848,13 @@
         });
         const operations = result.information?.operations || [];
         setStatus(testStatus, `EWS info OK using SOAP ${result.soapVersion}. Supported operations: ${operations.length}.`, true);
+        renderTestResults([{
+          ok: true,
+          siteId: state.selectedSiteId,
+          connector: "EBO EWS SOAP",
+          alarmCount: operations.length,
+          message: `SOAP ${result.soapVersion} info returned`
+        }]);
         testResult.textContent = JSON.stringify({
           endpointUrl: result.endpointUrl,
           soapVersion: result.soapVersion,
@@ -1162,7 +1870,88 @@
           method: "POST"
         });
         setStatus(testStatus, `WebStation OK. Alarm record range ${result.alarmRecords?.firstRecord || "-"} to ${result.alarmRecords?.lastRecord || "-"}.`, true);
+        renderTestResults([{
+          ok: true,
+          siteId: state.selectedSiteId,
+          connector: "EBO WebStation",
+          message: `Alarm records ${result.alarmRecords?.firstRecord || "-"} to ${result.alarmRecords?.lastRecord || "-"}`
+        }]);
         testResult.textContent = JSON.stringify(result, null, 2);
+      }
+
+      async function runSelectedSiteCheck() {
+        if (!requireSelectedSite(testStatus)) return;
+        const selectedSite = getSelectedSite();
+
+        if (selectedSite?.connectionType === "EBO WebStation") {
+          await testWebStation();
+          await testConnection();
+          return;
+        }
+
+        if (selectedSite?.connectionType === "EBO EWS SOAP") {
+          await testEwsInfo();
+          await testConnection();
+          return;
+        }
+
+        await testConnection();
+      }
+
+      async function testAllSites() {
+        const result = await api("/api/sites/test-all", { method: "POST" });
+        state.lastTestResults = result.results || [];
+        renderTestResults(state.lastTestResults);
+        setStatus(
+          testStatus,
+          `Tested ${result.total} enabled site${result.total === 1 ? "" : "s"}: ${result.passed} passed, ${result.failed} failed.`,
+          result.failed === 0
+        );
+        testResult.textContent = JSON.stringify({
+          total: result.total,
+          passed: result.passed,
+          failed: result.failed
+        }, null, 2);
+        await loadSites();
+      }
+
+      async function fetchAllPollingSites() {
+        const result = await api("/api/sites/fetch-all-alarms", { method: "POST" });
+        renderTestResults(result.results || []);
+        setStatus(
+          dashboardStatus,
+          `Fetched ${result.fetched} alarms, saved ${result.saved}, closed ${result.returnedToNormal}, failed ${result.failed}.`,
+          result.failed === 0
+        );
+        await loadSites();
+        await loadAlarms();
+      }
+
+      function renderTestResults(results) {
+        testResultsList.innerHTML = "";
+        if (!results.length) {
+          testResultsList.innerHTML = "<div class=\"empty\">No test results yet.</div>";
+          return;
+        }
+
+        for (const result of results) {
+          const card = document.createElement("div");
+          card.className = `test-result-card ${result.ok ? "ok" : "error"}`;
+          const label = result.clientName && result.siteName
+            ? `${result.clientName} - ${result.siteName}`
+            : result.siteId || "Selected site";
+          const count = typeof result.alarmCount === "number"
+            ? `${result.alarmCount} alarms`
+            : typeof result.fetched === "number"
+              ? `${result.fetched} fetched, ${result.saved || 0} saved`
+              : result.message || "";
+          card.innerHTML = `
+            <span>${result.ok ? "Passed" : "Failed"} / ${escapeHtml(result.connector || "-")}</span>
+            <strong>${escapeHtml(label)}</strong>
+            <p>${escapeHtml(result.ok ? count : result.error || "Test failed")}</p>
+          `;
+          testResultsList.appendChild(card);
+        }
       }
 
       async function fetchAlarms() {
@@ -1173,6 +1962,7 @@
         });
         setStatus(alarmStatus, `Fetched ${result.fetched} alarms by ${result.connector || "selected connector"}, saved ${result.saved}, closed ${result.returnedToNormal || 0}.`, true);
         await loadAlarms();
+        await loadSites();
       }
 
       async function refreshAlarmsFromEbo() {
@@ -1200,6 +1990,7 @@
         alarmStatus.textContent = state.selectedSiteId
           ? `${selected.length} active alarm${selected.length === 1 ? "" : "s"} for selected site${connector ? ` via ${connector}` : ""}`
           : `${selected.length} active alarm${selected.length === 1 ? "" : "s"}`;
+        updateDashboard();
 
         if (!selected.length) {
           const row = document.createElement("tr");
@@ -1427,6 +2218,7 @@
 
       function beginNewSite() {
         clearForm();
+        selectedSiteLabel.textContent = "New site. Fill in the setup modal, then save.";
         openSiteSetupModal();
       }
 
@@ -1480,7 +2272,34 @@
           closeSiteSetupModal();
         });
       });
+      document.querySelectorAll(".tab-button").forEach((button) => {
+        button.addEventListener("click", () => switchTab(button.dataset.tab));
+      });
+      document.querySelectorAll(".app-nav a").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          const panelId = link.getAttribute("href").replace("#", "");
+          switchTab(panelId.replace("Panel", ""));
+        });
+      });
+      document.querySelectorAll("[data-dashboard-detail]").forEach((card) => {
+        card.addEventListener("click", () => showDashboardDetail(card.dataset.dashboardDetail));
+        card.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            showDashboardDetail(card.dataset.dashboardDetail);
+          }
+        });
+      });
       document.getElementById("newSiteButton").addEventListener("click", beginNewSite);
+      document.getElementById("newSiteTabButton").addEventListener("click", beginNewSite);
+      document.getElementById("editSelectedSiteButton").addEventListener("click", () => {
+        if (!state.selectedSiteId) {
+          setStatus(formStatus, "Select a site before editing.", false);
+          return;
+        }
+        openSiteSetupModal();
+      });
       closeSiteSetupButton.addEventListener("click", closeSiteSetupModal);
       cancelSiteSetupButton.addEventListener("click", closeSiteSetupModal);
       siteSetupModal.addEventListener("click", (event) => {
@@ -1491,6 +2310,17 @@
       );
       document.getElementById("refreshStatusButton").addEventListener("click", () =>
         withBusy(document.getElementById("refreshStatusButton"), loadAppStatus)
+      );
+      document.getElementById("dashboardRefreshButton").addEventListener("click", () =>
+        withBusy(document.getElementById("dashboardRefreshButton"), async () => {
+          await loadAppStatus();
+          await loadSites();
+          await loadAlarms();
+          setStatus(dashboardStatus, "Dashboard refreshed.", true);
+        })
+      );
+      document.getElementById("dashboardFetchAllButton").addEventListener("click", () =>
+        withBusy(document.getElementById("dashboardFetchAllButton"), fetchAllPollingSites)
       );
       deleteSiteButton.addEventListener("click", () => withBusy(deleteSiteButton, deleteSite));
       cancelDeleteButton.addEventListener("click", () => closeDeleteModal(false));
@@ -1510,6 +2340,12 @@
       document.getElementById("testButton").addEventListener("click", () =>
         withBusy(document.getElementById("testButton"), testConnection)
       );
+      document.getElementById("runAutoTestButton").addEventListener("click", () =>
+        withBusy(document.getElementById("runAutoTestButton"), runSelectedSiteCheck)
+      );
+      document.getElementById("testAllButton").addEventListener("click", () =>
+        withBusy(document.getElementById("testAllButton"), testAllSites)
+      );
       document.getElementById("testEwsInfoButton").addEventListener("click", () =>
         withBusy(document.getElementById("testEwsInfoButton"), testEwsInfo)
       );
@@ -1528,7 +2364,9 @@
 
       clearForm();
       loadAppStatus();
-      loadSites().catch((error) => setStatus(siteListStatus, error.message, false));
+      loadSites()
+        .then(loadAlarms)
+        .catch((error) => setStatus(siteListStatus, error.message, false));
     </script>
   </body>
 </html>

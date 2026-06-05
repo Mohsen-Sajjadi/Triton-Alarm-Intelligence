@@ -9,9 +9,11 @@ async function collectAlarms() {
   console.log(`[Alarm Collector] Running at ${new Date().toISOString()}`);
 
   const sites = await getPollingSites();
+  const now = new Date();
 
   for (const site of sites) {
     if (!site.enabled || site.pollingEnabled === false) continue;
+    if (!shouldPollSiteNow(site, now)) continue;
 
     const alarms = await fetchActiveAlarms(site);
     await updatePollStatus(site, true, `Fetched ${alarms.length} alarms`, alarms.length);
@@ -40,6 +42,51 @@ async function getPollingSites() {
   }).lean();
 
   return dbSites.length ? dbSites : configuredSites;
+}
+
+function shouldPollSiteNow(site, now = new Date()) {
+  if (site.pollingEnabled === false) return false;
+
+  const days = Array.isArray(site.pollDays) && site.pollDays.length
+    ? site.pollDays.map(Number)
+    : [0, 1, 2, 3, 4, 5, 6];
+
+  if (!days.includes(now.getDay())) return false;
+
+  if (!isTimeWithinWindow(now, site.pollStartTime || "00:00", site.pollEndTime || "23:59")) {
+    return false;
+  }
+
+  const intervalMinutes = Math.max(Number(site.pollIntervalMinutes || 5), 1);
+  if (!site.lastAlarmPollAt) return true;
+
+  const lastPollAt = new Date(site.lastAlarmPollAt).getTime();
+  if (Number.isNaN(lastPollAt)) return true;
+
+  return now.getTime() - lastPollAt >= intervalMinutes * 60 * 1000;
+}
+
+function isTimeWithinWindow(now, startTime, endTime) {
+  const current = now.getHours() * 60 + now.getMinutes();
+  const start = parseTimeToMinutes(startTime, 0);
+  const end = parseTimeToMinutes(endTime, 23 * 60 + 59);
+
+  if (start <= end) {
+    return current >= start && current <= end;
+  }
+
+  return current >= start || current <= end;
+}
+
+function parseTimeToMinutes(value, fallback) {
+  const match = String(value || "").match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return fallback;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return fallback;
+
+  return hours * 60 + minutes;
 }
 
 async function updatePollStatus(site, ok, message, alarmCount) {
@@ -134,6 +181,7 @@ function getAlarmKey(alarm) {
 module.exports = {
   collectAlarms,
   getPollingSites,
+  shouldPollSiteNow,
   upsertAlarm,
   reconcileActiveAlarms
 };

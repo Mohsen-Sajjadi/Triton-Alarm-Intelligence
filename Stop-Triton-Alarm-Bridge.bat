@@ -3,7 +3,7 @@ setlocal
 
 set "PORT=3010"
 
-echo Stopping Triton Data Bridge on port %PORT%...
+echo Stopping Triton AI Alarm Insights on port %PORT%...
 echo.
 
 for /f "tokens=5" %%P in ('netstat -ano ^| findstr /R /C:":%PORT% .*LISTENING"') do (
@@ -19,5 +19,5 @@ for /f "tokens=5" %%P in ('netstat -ano ^| findstr /R /C:":%PORT% .*LISTENING"')
   exit /b 0
 )
 
-echo No running Triton Data Bridge process was found on port %PORT%.
+echo No running Triton AI Alarm Insights process was found on port %PORT%.
 pause

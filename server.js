@@ -31,7 +31,7 @@ app.use("/demo-gateway", demoGatewayRoutes);
 app.get("/api/health", (req, res) => {
   res.json({
     status: "OK",
-    app: "Triton Data Bridge",
+    app: "Triton AI Alarm Insights",
     time: new Date().toISOString()
   });
 });
@@ -49,7 +49,7 @@ async function startServer() {
     console.log("Connected to MongoDB");
 
     app.listen(PORT, () => {
-      console.log(`Triton Data Bridge running on port ${PORT}`);
+      console.log(`Triton AI Alarm Insights running on port ${PORT}`);
     });
 
     const intervalSeconds = Number(process.env.POLL_INTERVAL_SECONDS || 30);

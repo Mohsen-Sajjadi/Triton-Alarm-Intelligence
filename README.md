@@ -1,13 +1,13 @@
-# Triton Data Bridge
+# Triton AI Alarm Insights
 
-Small Node.js integration platform for collecting Schneider EBO / SmartConnector alarm and point data into MongoDB, then exposing it through Triton-owned APIs for the Client Portal, analytics, ServiceSync, and future AI workflows.
+Small Node.js integration platform for collecting Schneider EBO / SmartConnector alarm and point data into MongoDB, then exposing it through Triton-owned APIs for alarm insights, analytics, ServiceSync, and future AI workflows.
 
 ## Architecture
 
 ```text
 Schneider EBO / Enterprise Server / AS-P
         -> EWS / SmartConnector RESTful EWS Gateway
-        -> Triton Data Bridge
+        -> Triton AI Alarm Insights
         -> MongoDB
         -> Triton API
         -> Client Portal / Analytics / AI
@@ -178,6 +178,17 @@ Start with:
 - No automatic client notification
 
 Point collection exists behind `ENABLE_POINT_COLLECTION=false` so it can be turned on after the alarm path is stable.
+
+## Automatic Polling Schedule
+
+Each site can control automatic alarm polling from the admin Site Setup modal:
+
+- `Poll automatically`: enables background polling for that site.
+- `Poll Every`: per-site interval in minutes.
+- `Active Days`: days when background polling is allowed.
+- `Start Time` / `End Time`: daily polling window using the server's local time.
+
+Manual actions such as `Fetch Selected Site` and `Fetch Polling Sites` still run immediately. The schedule only controls background automatic polling.
 
 ## NSSM Example
 

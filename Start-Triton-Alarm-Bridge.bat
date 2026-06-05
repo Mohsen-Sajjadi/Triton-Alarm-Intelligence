@@ -20,7 +20,7 @@ if not exist "node_modules" (
   )
 )
 
-echo Starting Triton Data Bridge...
+echo Starting Triton AI Alarm Insights...
 echo.
 echo Admin page: http://localhost:3010/admin/sites.html
 echo Health API:  http://localhost:3010/api/health

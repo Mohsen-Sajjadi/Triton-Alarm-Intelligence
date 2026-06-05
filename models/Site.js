@@ -20,6 +20,13 @@ const siteSchema = new mongoose.Schema(
     password: { type: String },
     enabled: { type: Boolean, default: false },
     pollingEnabled: { type: Boolean, default: false },
+    pollIntervalMinutes: { type: Number, default: 5, min: 1 },
+    pollDays: {
+      type: [Number],
+      default: [0, 1, 2, 3, 4, 5, 6]
+    },
+    pollStartTime: { type: String, default: "00:00" },
+    pollEndTime: { type: String, default: "23:59" },
     alarmPriorityFilter: {
       type: [String],
       default: ["Critical", "High"]
