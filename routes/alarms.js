@@ -39,11 +39,63 @@ router.get("/active", async (req, res) => {
   }
 });
 
+router.get("/history", async (req, res) => {
+  try {
+    const query = {};
+
+    if (req.query.siteId) {
+      query.siteId = req.query.siteId;
+    }
+
+    if (req.query.state) {
+      query.state = req.query.state;
+    } else {
+      query.state = { $nin: ["Active", "Acknowledged"] };
+    }
+
+    const limit = Math.min(Number(req.query.limit || 1000), 5000);
+    const alarms = await Alarm.find(query).sort({
+      returnedToNormalAt: -1,
+      occurredAt: -1,
+      updatedAt: -1
+    }).limit(limit);
+
+    res.json(alarms);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get active alarms that match each site's attention policy.
+router.get("/attention", async (req, res) => {
+  try {
+    const query = {
+      needsAttention: true,
+      state: { $in: ["Active", "Acknowledged"] }
+    };
+
+    if (req.query.siteId) {
+      query.siteId = req.query.siteId;
+    }
+
+    const limit = Math.min(Number(req.query.limit || 1000), 5000);
+    const alarms = await Alarm.find(query).sort({
+      actionPriority: 1,
+      occurredAt: -1,
+      updatedAt: -1
+    }).limit(limit);
+
+    res.json(alarms);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get critical alarms.
 router.get("/critical", async (req, res) => {
   try {
     const alarms = await Alarm.find({
-      priority: "Critical",
+      actionPriority: "Critical",
       state: { $in: ["Active", "Acknowledged"] }
     }).sort({ occurredAt: -1 });
 

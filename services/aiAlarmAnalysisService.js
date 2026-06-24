@@ -3,6 +3,42 @@ const Alarm = require("../models/Alarm");
 const AiRecommendation = require("../models/AiRecommendation");
 
 const PROMPT_VERSION = "alarm-analysis-v1";
+const DEFAULT_OPENAI_MODEL = "gpt-5.5";
+
+const ANALYSIS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    issueType: { type: "string" },
+    summary: { type: "string" },
+    likelyCause: { type: "string" },
+    urgency: { type: "string", enum: ["Low", "Medium", "High", "Critical"] },
+    confidence: { type: "string", enum: ["Low", "Medium", "High"] },
+    technicianRequired: { type: "boolean" },
+    recommendedAction: { type: "string" },
+    ticketDraft: { type: "string" },
+    evidence: {
+      type: "array",
+      items: { type: "string" }
+    },
+    riskNotes: {
+      type: "array",
+      items: { type: "string" }
+    }
+  },
+  required: [
+    "issueType",
+    "summary",
+    "likelyCause",
+    "urgency",
+    "confidence",
+    "technicianRequired",
+    "recommendedAction",
+    "ticketDraft",
+    "evidence",
+    "riskNotes"
+  ]
+};
 
 async function analyzeAlarm(alarmId, options = {}) {
   const alarm = await Alarm.findById(alarmId).lean();
@@ -139,7 +175,7 @@ async function runAiAnalysis(context, options = {}) {
   return buildLocalAnalysis(context);
 }
 
-function shouldUseOpenAi(options) {
+function shouldUseOpenAi(options = {}) {
   const provider = String(options.provider || process.env.AI_PROVIDER || "").toLowerCase();
   return provider === "openai" && Boolean(process.env.OPENAI_API_KEY);
 }
@@ -147,36 +183,36 @@ function shouldUseOpenAi(options) {
 async function runOpenAiAnalysis(context) {
   const model = getModelName();
   const response = await axios.post(
-    "https://api.openai.com/v1/chat/completions",
+    "https://api.openai.com/v1/responses",
     {
       model,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
+      reasoning: {
+        effort: process.env.OPENAI_REASONING_EFFORT || "low"
+      },
+      text: {
+        verbosity: "low",
+        format: {
+          type: "json_schema",
+          name: "alarm_analysis",
+          strict: true,
+          schema: ANALYSIS_SCHEMA
+        }
+      },
+      max_output_tokens: 1200,
+      input: [
         {
           role: "system",
           content: [
             "You are a senior building automation alarm triage assistant.",
-            "Return strict JSON only.",
             "Do not claim certainty. Use provided alarm evidence only.",
-            "Do not recommend unsafe bypasses. Escalate safety, freeze, smoke, leak, and critical equipment risks."
+            "Do not recommend unsafe bypasses.",
+            "Escalate safety, freeze, smoke, leak, and critical equipment risks.",
+            "Write concise field-ready guidance for Triton service staff."
           ].join(" ")
         },
         {
           role: "user",
           content: JSON.stringify({
-            schema: {
-              issueType: "short category",
-              summary: "plain English summary",
-              likelyCause: "most likely cause or Unknown",
-              urgency: "Low | Medium | High | Critical",
-              confidence: "Low | Medium | High",
-              technicianRequired: "boolean",
-              recommendedAction: "ordered field/remote checks",
-              ticketDraft: "service ticket draft",
-              evidence: ["specific facts from context"],
-              riskNotes: ["risks or assumptions"]
-            },
             context
           })
         }
@@ -191,12 +227,27 @@ async function runOpenAiAnalysis(context) {
     }
   );
 
-  const content = response.data?.choices?.[0]?.message?.content;
+  const content = extractResponseText(response.data);
   const parsed = JSON.parse(content || "{}");
   return normalizeAnalysis(parsed, {
     provider: "openai",
     model
   });
+}
+
+function extractResponseText(response) {
+  if (response?.output_text) return response.output_text;
+
+  const parts = [];
+  for (const item of response?.output || []) {
+    for (const content of item.content || []) {
+      if (content.type === "output_text" && content.text) {
+        parts.push(content.text);
+      }
+    }
+  }
+
+  return parts.join("");
 }
 
 function buildLocalAnalysis(context, overrides = {}) {
@@ -376,10 +427,14 @@ function buildEvidence(context) {
 }
 
 function getProviderName() {
-  return process.env.AI_PROVIDER || "local-rules";
+  return shouldUseOpenAi() ? "openai" : "local-rules";
 }
 
 function getModelName() {
+  if (shouldUseOpenAi()) {
+    return process.env.AI_MODEL || process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL;
+  }
+
   return process.env.AI_MODEL || process.env.OPENAI_MODEL || "local-rules";
 }
 

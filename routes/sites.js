@@ -4,6 +4,7 @@ const { fetchActiveAlarms } = require("../connectors/eboAlarmConnector");
 const { fetchEwsWebServiceInformation } = require("../connectors/eboEwsSoapConnector");
 const { testWebStationAccess } = require("../connectors/eboWebStationConnector");
 const { reconcileActiveAlarms, upsertAlarm } = require("../services/alarmCollector");
+const { recalculateAlarmPolicyForSite } = require("../services/alarmPolicyRecalculator");
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const site = await Site.create(normalizeSiteBody(req.body));
+    await recalculateAlarmPolicyForSite(site);
     res.status(201).json(site);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -37,9 +39,33 @@ router.patch("/:siteId", async (req, res) => {
       return res.status(404).json({ error: "Site not found" });
     }
 
-    return res.json(site);
+    const recalculation = await recalculateAlarmPolicyForSite(site);
+
+    return res.json({
+      ...site.toObject(),
+      policyRecalculation: recalculation
+    });
   } catch (error) {
     return res.status(400).json({ error: error.message });
+  }
+});
+
+router.post("/:siteId/recalculate-policy", async (req, res) => {
+  try {
+    const site = await Site.findOne({ siteId: req.params.siteId });
+
+    if (!site) {
+      return res.status(404).json({ error: "Site not found" });
+    }
+
+    const recalculation = await recalculateAlarmPolicyForSite(site);
+    return res.json({
+      ok: true,
+      siteId: site.siteId,
+      ...recalculation
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -195,13 +221,7 @@ router.post("/:siteId/fetch-alarms", async (req, res) => {
     const saved = [];
 
     for (const alarm of alarms) {
-      const allowedPriority =
-        !site.alarmPriorityFilter?.length ||
-        site.alarmPriorityFilter.includes(alarm.priority);
-
-      if (!allowedPriority) continue;
-
-      saved.push(await upsertAlarm(alarm));
+      saved.push(await upsertAlarm(alarm, site));
     }
 
     await Site.findOneAndUpdate(
@@ -291,13 +311,7 @@ async function fetchAndSaveSiteAlarms(site) {
     const saved = [];
 
     for (const alarm of alarms) {
-      const allowedPriority =
-        !site.alarmPriorityFilter?.length ||
-        site.alarmPriorityFilter.includes(alarm.priority);
-
-      if (!allowedPriority) continue;
-
-      saved.push(await upsertAlarm(alarm));
+      saved.push(await upsertAlarm(alarm, site));
     }
 
     await Site.findOneAndUpdate(
@@ -378,6 +392,35 @@ function normalizeSiteBody(body) {
       .split(",")
       .map((priority) => priority.trim())
       .filter(Boolean);
+  }
+  if (!Array.isArray(normalized.alarmPriorityFilter)) {
+    normalized.alarmPriorityFilter = ["Critical", "High"];
+  }
+
+  for (const field of [
+    "criticalPriorityFilter",
+    "urgentAlarmCategories",
+    "criticalAlarmKeywords",
+    "highAlarmKeywords"
+  ]) {
+    if (typeof normalized[field] === "string") {
+      normalized[field] = normalized[field]
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+  if (!Array.isArray(normalized.criticalPriorityFilter)) {
+    normalized.criticalPriorityFilter = ["Critical"];
+  }
+  if (!Array.isArray(normalized.urgentAlarmCategories)) {
+    normalized.urgentAlarmCategories = [];
+  }
+  if (!Array.isArray(normalized.criticalAlarmKeywords)) {
+    normalized.criticalAlarmKeywords = ["smoke", "fire", "freeze", "leak", "life safety"];
+  }
+  if (!Array.isArray(normalized.highAlarmKeywords)) {
+    normalized.highAlarmKeywords = ["offline", "communication", "comm", "compressor", "lockout", "fan", "airflow", "flow"];
   }
 
   normalized.pollIntervalMinutes = Math.max(

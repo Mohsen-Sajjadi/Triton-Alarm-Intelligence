@@ -43,6 +43,10 @@ ENABLE_POINT_COLLECTION=false
 ENABLE_NOTIFICATIONS=false
 ENABLE_SERVICE_TICKETS=false
 TRITON_TEAM_EMAIL=service@triton-concepts.com
+AI_PROVIDER=openai
+AI_MODEL=gpt-5.5
+OPENAI_REASONING_EFFORT=low
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 Update `config/sites.js` with the pilot SmartConnector / EWS Gateway details.
@@ -148,6 +152,9 @@ AI preparation:
 - `POST /api/ai/recommend-action`
 - `POST /api/ai/monthly-report`
 - `POST /api/ai/root-cause-analysis`
+
+OpenAI mode is enabled when `AI_PROVIDER=openai` and `OPENAI_API_KEY` is set.
+If OpenAI is not configured or the request fails, alarm analysis falls back to the local rule-based analyzer.
 
 Service issues:
 

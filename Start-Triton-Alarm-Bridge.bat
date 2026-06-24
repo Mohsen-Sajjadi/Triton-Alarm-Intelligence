@@ -29,5 +29,6 @@ echo Keep this window open while the bridge is running.
 echo Press Ctrl+C to stop it.
 echo.
 
+start "" "http://localhost:3010/admin/sites.html"
 call npm start
 pause

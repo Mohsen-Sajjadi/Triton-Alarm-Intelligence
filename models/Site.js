@@ -31,6 +31,22 @@ const siteSchema = new mongoose.Schema(
       type: [String],
       default: ["Critical", "High"]
     },
+    criticalPriorityFilter: {
+      type: [String],
+      default: ["Critical"]
+    },
+    urgentAlarmCategories: {
+      type: [String],
+      default: []
+    },
+    criticalAlarmKeywords: {
+      type: [String],
+      default: ["smoke", "fire", "freeze", "leak", "life safety"]
+    },
+    highAlarmKeywords: {
+      type: [String],
+      default: ["offline", "communication", "comm", "compressor", "lockout", "fan", "airflow", "flow"]
+    },
     pointDefinitions: [
       {
         equipmentName: { type: String },

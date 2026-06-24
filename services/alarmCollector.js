@@ -3,6 +3,7 @@ const Site = require("../models/Site");
 const { fetchActiveAlarms } = require("../connectors/eboAlarmConnector");
 const configuredSites = require("../config/sites");
 const { classifyAlarm } = require("./alarmClassifier");
+const { evaluateAlarmPriority } = require("./alarmPriorityPolicy");
 const { notifyCriticalAlarm } = require("./notificationService");
 
 async function collectAlarms() {
@@ -20,13 +21,8 @@ async function collectAlarms() {
     await reconcileActiveAlarms(site, alarms);
 
     for (const alarm of alarms) {
-      const allowedPriority =
-        !site.alarmPriorityFilter || site.alarmPriorityFilter.includes(alarm.priority);
-
-      if (!allowedPriority) continue;
-
       try {
-        await upsertAlarm(alarm);
+        await upsertAlarm(alarm, site);
       } catch (error) {
         console.error(`[${site.siteName}] Failed to save alarm:`, error.message);
         await updatePollStatus(site, false, error.message);
@@ -107,8 +103,9 @@ async function updatePollStatus(site, ok, message, alarmCount) {
   }
 }
 
-async function upsertAlarm(alarmData) {
+async function upsertAlarm(alarmData, site = {}) {
   alarmData.category = alarmData.category || classifyAlarm(alarmData);
+  Object.assign(alarmData, evaluateAlarmPriority(alarmData, site));
 
   const existingAlarm = await Alarm.findOne({
     siteId: alarmData.siteId,
@@ -120,6 +117,9 @@ async function upsertAlarm(alarmData) {
   if (existingAlarm) {
     existingAlarm.priority = alarmData.priority;
     existingAlarm.eboPriority = alarmData.eboPriority;
+    existingAlarm.actionPriority = alarmData.actionPriority;
+    existingAlarm.needsAttention = alarmData.needsAttention;
+    existingAlarm.attentionReason = alarmData.attentionReason;
     existingAlarm.state = alarmData.state;
     existingAlarm.acknowledged = alarmData.acknowledged;
     existingAlarm.message = alarmData.message;
@@ -139,7 +139,7 @@ async function upsertAlarm(alarmData) {
   const newAlarm = await Alarm.create(alarmData);
   console.log(`Created new alarm: ${newAlarm.alarmName}`);
 
-  if (newAlarm.priority === "Critical") {
+  if (newAlarm.actionPriority === "Critical") {
     await notifyCriticalAlarm(newAlarm);
   }
 

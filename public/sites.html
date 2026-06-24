@@ -259,6 +259,57 @@
         box-shadow: 0 8px 16px rgba(180, 35, 24, 0.16);
       }
 
+      .segmented {
+        align-items: center;
+        display: inline-flex;
+        gap: 4px;
+      }
+
+      .segmented button {
+        background: #ffffff;
+        border-color: var(--border);
+        color: var(--primary);
+      }
+
+      .segmented button.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #ffffff;
+      }
+
+      .priority-badge {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+        padding: 5px 8px;
+      }
+
+      .priority-badge.critical {
+        background: var(--danger-soft);
+        border-color: rgba(180, 35, 24, 0.28);
+        color: var(--danger);
+      }
+
+      .priority-badge.high {
+        background: #fff7ed;
+        border-color: rgba(154, 103, 0, 0.28);
+        color: var(--warn);
+      }
+
+      .priority-badge.elevated {
+        background: var(--primary-soft);
+        border-color: rgba(7, 89, 133, 0.24);
+        color: var(--primary);
+      }
+
+      .priority-badge.normal {
+        background: #f8fafc;
+        color: var(--muted);
+      }
+
       button:disabled {
         cursor: wait;
         opacity: 0.65;
@@ -768,6 +819,61 @@
         grid-column: 1 / -1;
       }
 
+      .policy-section {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        grid-column: 1 / -1;
+        padding: 10px;
+      }
+
+      .policy-section h3 {
+        margin-bottom: 8px;
+      }
+
+      .multi-select {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: grid;
+        gap: 7px;
+        padding: 8px;
+      }
+
+      .multi-select-menu {
+        display: grid;
+        gap: 6px;
+        max-height: 260px;
+        overflow: auto;
+      }
+
+      .multi-option {
+        align-items: center;
+        border-radius: 6px;
+        display: flex;
+        gap: 8px;
+        padding: 6px;
+      }
+
+      .multi-option:hover {
+        background: var(--panel-soft);
+      }
+
+      .multi-option input {
+        min-height: 16px;
+        width: 16px;
+      }
+
+      .multi-option label {
+        color: var(--ink);
+        margin: 0;
+      }
+
+      .multi-empty {
+        color: var(--muted);
+        font-size: 12px;
+        padding: 6px;
+      }
+
       .compact-row {
         align-items: center;
         display: flex;
@@ -993,6 +1099,7 @@
         <a class="active" href="#dashboardPanel">Insights</a>
         <a href="#testsPanel">Tests</a>
         <a href="#workspacePanel">Alarms</a>
+        <a href="#historyPanel">Historical</a>
         <a href="#setupPanel">Sites</a>
       </nav>
     </header>
@@ -1035,6 +1142,7 @@
           <button type="button" class="tab-button active" data-tab="dashboard">Insights</button>
           <button type="button" class="tab-button" data-tab="tests">Tests</button>
           <button type="button" class="tab-button" data-tab="workspace">Alarms</button>
+          <button type="button" class="tab-button" data-tab="history">Historical</button>
           <button type="button" class="tab-button" data-tab="setup">Sites</button>
         </div>
 
@@ -1062,6 +1170,10 @@
             <div class="metric status-info" data-dashboard-detail="active-alarms" role="button" tabindex="0">
               <span>Active Alarms</span>
               <strong id="metricActiveAlarms">0</strong>
+            </div>
+            <div class="metric status-error" data-dashboard-detail="attention-alarms" role="button" tabindex="0">
+              <span>Attention Needed</span>
+              <strong id="metricAttentionAlarms">0</strong>
             </div>
             <div class="metric status-error" data-dashboard-detail="failed-tests" role="button" tabindex="0">
               <span>Failed Tests</span>
@@ -1146,6 +1258,10 @@
               <p>Review active alarms, refresh from the selected site, and create analysis output when needed.</p>
             </div>
             <div class="actions" style="margin-top: 0">
+              <div class="segmented" aria-label="Alarm view">
+                <button type="button" class="active" id="showAttentionAlarmsButton">Attention</button>
+                <button type="button" id="showAllAlarmsButton">All Active</button>
+              </div>
               <button type="button" id="fetchButton">Fetch Selected Site</button>
               <button type="button" class="secondary" id="refreshAlarmsButton">Refresh From EBO</button>
               <button type="button" class="secondary" id="analyzeSiteButton">Analyze Site</button>
@@ -1155,14 +1271,15 @@
           <div class="table-shell">
             <table class="alarm-table">
               <colgroup>
-                <col style="width: 18%">
-                <col style="width: 22%">
-                <col style="width: 21%">
+                <col style="width: 17%">
+                <col style="width: 20%">
+                <col style="width: 20%">
                 <col style="width: 10%">
+                <col style="width: 9%">
                 <col style="width: 8%">
-                <col style="width: 7%">
-                <col style="width: 7%">
-                <col style="width: 7%">
+                <col style="width: 6%">
+                <col style="width: 5%">
+                <col style="width: 5%">
               </colgroup>
               <thead>
                 <tr>
@@ -1170,6 +1287,7 @@
                   <th>Source</th>
                   <th>Alarm Text</th>
                   <th>Category</th>
+                  <th>Action</th>
                   <th>Priority</th>
                   <th>State</th>
                   <th>Alarm Time</th>
@@ -1177,6 +1295,48 @@
                 </tr>
               </thead>
               <tbody id="alarmRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="historyPanel">
+          <div class="toolbar">
+            <div>
+              <h2>Historical Alarms</h2>
+              <p>Review alarms that returned to normal or are no longer in the live active list.</p>
+            </div>
+            <div class="actions" style="margin-top: 0">
+              <button type="button" class="secondary" id="refreshHistoryButton">Refresh History</button>
+            </div>
+          </div>
+          <div id="historyStatus" class="status"></div>
+          <div class="table-shell">
+            <table class="alarm-table">
+              <colgroup>
+                <col style="width: 17%">
+                <col style="width: 20%">
+                <col style="width: 20%">
+                <col style="width: 10%">
+                <col style="width: 9%">
+                <col style="width: 8%">
+                <col style="width: 6%">
+                <col style="width: 5%">
+                <col style="width: 5%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Alarm</th>
+                  <th>Source</th>
+                  <th>Alarm Text</th>
+                  <th>Category</th>
+                  <th>Action</th>
+                  <th>Priority</th>
+                  <th>State</th>
+                  <th>Alarm Time</th>
+                  <th>Last Seen</th>
+                </tr>
+              </thead>
+              <tbody id="historyRows"></tbody>
             </table>
           </div>
         </div>
@@ -1306,32 +1466,64 @@
                 <label for="password">Password</label>
                 <input id="password" name="password" form="siteForm" type="password" autocomplete="current-password">
               </div>
-              <div class="field">
-                <label for="alarmPriorityFilter">Alarm Priorities</label>
-                <input id="alarmPriorityFilter" name="alarmPriorityFilter" form="siteForm" placeholder="Critical,High">
+              <div class="policy-section">
+                <h3>Attention policy</h3>
+                <div class="form-grid">
+                  <div class="field">
+                    <label>Critical Priority Levels</label>
+                    <input id="criticalPriorityFilter" name="criticalPriorityFilter" form="siteForm" type="hidden">
+                    <div class="multi-select" data-multi="criticalPriorityFilter"></div>
+                  </div>
+                  <div class="field">
+                    <label>High Priority Levels</label>
+                    <input id="alarmPriorityFilter" name="alarmPriorityFilter" form="siteForm" type="hidden">
+                    <div class="multi-select" data-multi="alarmPriorityFilter"></div>
+                  </div>
+                  <div class="field">
+                    <label>Urgent Categories</label>
+                    <input id="urgentAlarmCategories" name="urgentAlarmCategories" form="siteForm" type="hidden">
+                    <div class="multi-select" data-multi="urgentAlarmCategories"></div>
+                  </div>
+                  <div class="field">
+                    <label>Critical Keywords</label>
+                    <input id="criticalAlarmKeywords" name="criticalAlarmKeywords" form="siteForm" type="hidden">
+                    <div class="multi-select" data-multi="criticalAlarmKeywords"></div>
+                  </div>
+                  <div class="field-wide">
+                    <label>High Priority Keywords</label>
+                    <input id="highAlarmKeywords" name="highAlarmKeywords" form="siteForm" type="hidden">
+                    <div class="multi-select" data-multi="highAlarmKeywords"></div>
+                  </div>
+                </div>
               </div>
-              <div class="field">
-                <label for="pollIntervalMinutes">Poll Every</label>
-                <input id="pollIntervalMinutes" name="pollIntervalMinutes" form="siteForm" type="number" min="1" step="1" placeholder="5">
-              </div>
-              <div class="field">
-                <label for="pollStartTime">Start Time</label>
-                <input id="pollStartTime" name="pollStartTime" form="siteForm" type="time">
-              </div>
-              <div class="field">
-                <label for="pollEndTime">End Time</label>
-                <input id="pollEndTime" name="pollEndTime" form="siteForm" type="time">
-              </div>
-              <div class="field">
-                <label>Active Days</label>
-                <div class="compact-row" style="gap: 8px; margin-top: 0">
-                  <div class="check-row"><input class="poll-day" data-day="1" form="siteForm" type="checkbox"><label>Mon</label></div>
-                  <div class="check-row"><input class="poll-day" data-day="2" form="siteForm" type="checkbox"><label>Tue</label></div>
-                  <div class="check-row"><input class="poll-day" data-day="3" form="siteForm" type="checkbox"><label>Wed</label></div>
-                  <div class="check-row"><input class="poll-day" data-day="4" form="siteForm" type="checkbox"><label>Thu</label></div>
-                  <div class="check-row"><input class="poll-day" data-day="5" form="siteForm" type="checkbox"><label>Fri</label></div>
-                  <div class="check-row"><input class="poll-day" data-day="6" form="siteForm" type="checkbox"><label>Sat</label></div>
-                  <div class="check-row"><input class="poll-day" data-day="0" form="siteForm" type="checkbox"><label>Sun</label></div>
+
+              <div class="policy-section">
+                <h3>Polling schedule</h3>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="pollIntervalMinutes">Poll Every</label>
+                    <input id="pollIntervalMinutes" name="pollIntervalMinutes" form="siteForm" type="number" min="1" step="1" placeholder="5">
+                  </div>
+                  <div class="field">
+                    <label for="pollStartTime">Start Time</label>
+                    <input id="pollStartTime" name="pollStartTime" form="siteForm" type="time">
+                  </div>
+                  <div class="field">
+                    <label for="pollEndTime">End Time</label>
+                    <input id="pollEndTime" name="pollEndTime" form="siteForm" type="time">
+                  </div>
+                  <div class="field">
+                    <label>Active Days</label>
+                    <div class="compact-row" style="gap: 8px; margin-top: 0">
+                      <div class="check-row"><input class="poll-day" data-day="1" form="siteForm" type="checkbox"><label>Mon</label></div>
+                      <div class="check-row"><input class="poll-day" data-day="2" form="siteForm" type="checkbox"><label>Tue</label></div>
+                      <div class="check-row"><input class="poll-day" data-day="3" form="siteForm" type="checkbox"><label>Wed</label></div>
+                      <div class="check-row"><input class="poll-day" data-day="4" form="siteForm" type="checkbox"><label>Thu</label></div>
+                      <div class="check-row"><input class="poll-day" data-day="5" form="siteForm" type="checkbox"><label>Fri</label></div>
+                      <div class="check-row"><input class="poll-day" data-day="6" form="siteForm" type="checkbox"><label>Sat</label></div>
+                      <div class="check-row"><input class="poll-day" data-day="0" form="siteForm" type="checkbox"><label>Sun</label></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1389,7 +1581,9 @@
         sites: [],
         selectedSiteId: "",
         activeAlarms: [],
-        lastTestResults: []
+        historicalAlarms: [],
+        lastTestResults: [],
+        alarmView: "attention"
       };
 
       const siteForm = document.getElementById("siteForm");
@@ -1400,6 +1594,8 @@
       const testResult = document.getElementById("testResult");
       const alarmStatus = document.getElementById("alarmStatus");
       const alarmRows = document.getElementById("alarmRows");
+      const historyStatus = document.getElementById("historyStatus");
+      const historyRows = document.getElementById("historyRows");
       const selectedSiteLabel = document.getElementById("selectedSiteLabel");
       const deleteSiteButton = document.getElementById("deleteSiteButton");
       const bridgeStatus = document.getElementById("bridgeStatus");
@@ -1438,6 +1634,31 @@
       const dashboardDetailTitle = document.getElementById("dashboardDetailTitle");
       const dashboardDetailCount = document.getElementById("dashboardDetailCount");
       const dashboardDetailBody = document.getElementById("dashboardDetailBody");
+      const multiSelectConfig = {
+        criticalPriorityFilter: {
+          placeholder: "Select critical source priorities",
+          options: ["Critical", "High", "Medium", "Low"]
+        },
+        alarmPriorityFilter: {
+          placeholder: "Select high-priority source priorities",
+          options: ["Critical", "High", "Medium", "Low"]
+        },
+        urgentAlarmCategories: {
+          placeholder: "Select urgent alarm categories",
+          options: ["Safety", "Communication", "Network", "Plant", "AHU", "VAV", "Terminal Unit", "Sensor", "Energy", "Comfort", "Unknown"]
+        },
+        criticalAlarmKeywords: {
+          placeholder: "Select or add critical keywords",
+          allowCustom: true,
+          options: ["smoke", "fire", "freeze", "leak", "life safety", "flood", "gas", "emergency", "shutdown", "boiler", "pressure"]
+        },
+        highAlarmKeywords: {
+          placeholder: "Select or add high-priority keywords",
+          allowCustom: true,
+          options: ["offline", "communication", "comm", "compressor", "lockout", "fan", "airflow", "flow", "pump", "chiller", "boiler", "tower", "temperature", "humidity", "sensor", "bacnet"]
+        }
+      };
+      const multiSelectState = {};
       let pendingDeleteConfirm = null;
 
       async function api(path, options) {
@@ -1474,10 +1695,12 @@
         const selectedSite = getSelectedSite();
         const failedTests = state.sites.filter((site) => site.lastConnectionOk === false).length;
         const pollingSites = state.sites.filter((site) => site.pollingEnabled).length;
+        const attentionAlarms = state.activeAlarms.filter((alarm) => alarm.needsAttention).length;
 
         metricSites.textContent = state.sites.length;
         metricPolling.textContent = pollingSites;
         metricActiveAlarms.textContent = state.activeAlarms.length;
+        metricAttentionAlarms.textContent = attentionAlarms;
         metricFailedTests.textContent = failedTests;
 
         selectedSiteName.textContent = selectedSite
@@ -1555,6 +1778,12 @@
               ? `Active Alarms for ${selectedSite.clientName} - ${selectedSite.siteName}`
               : "Active Alarms",
             rows: state.activeAlarms.map(alarmToDetailRow)
+          }),
+          "attention-alarms": () => ({
+            title: selectedSite
+              ? `Attention Needed for ${selectedSite.clientName} - ${selectedSite.siteName}`
+              : "Attention Needed",
+            rows: state.activeAlarms.filter((alarm) => alarm.needsAttention).map(alarmToDetailRow)
           }),
           "failed-tests": () => ({
             title: "Failed Tests",
@@ -1642,12 +1871,151 @@
           title: `${alarm.priority || "Unknown"} - ${alarm.alarmName || "Unknown Alarm"}`,
           meta: [
             `${alarm.clientName || ""} / ${alarm.siteName || ""}`,
+            `Action: ${alarm.actionPriority || "Normal"}`,
             `State: ${alarm.state || "Unknown"}`,
             `Equipment: ${alarm.equipmentName || "Unknown"}`,
             alarm.occurredAt ? `Time: ${new Date(alarm.occurredAt).toLocaleString()}` : null
           ].filter(Boolean).join(" | "),
-          note: alarm.message || alarm.sourcePath || ""
+          note: Array.isArray(alarm.attentionReason) && alarm.attentionReason.length
+            ? alarm.attentionReason.join(" | ")
+            : alarm.message || alarm.sourcePath || ""
         };
+      }
+
+      function initializeMultiSelects() {
+        Object.entries(multiSelectConfig).forEach(([field, config]) => {
+          const container = document.querySelector(`[data-multi="${field}"]`);
+          if (!container) return;
+
+          multiSelectState[field] = {
+            selected: [],
+            query: "",
+            options: [...config.options]
+          };
+
+          container.innerHTML = `
+            <input type="search" data-multi-search="${field}" placeholder="Search ${escapeHtml(config.placeholder.toLowerCase())}">
+            <button type="button" class="secondary inline-action" data-multi-clear="${field}">Clear selected</button>
+            <div class="multi-select-menu">
+              <div data-multi-options="${field}"></div>
+            </div>
+          `;
+
+          container.querySelector("[data-multi-search]").addEventListener("input", (event) => {
+            multiSelectState[field].query = event.target.value;
+            renderMultiSelect(field);
+          });
+
+          container.querySelector("[data-multi-clear]").addEventListener("click", (event) => {
+            event.preventDefault();
+            multiSelectState[field].selected = [];
+            renderMultiSelect(field);
+          });
+
+          container.addEventListener("change", (event) => {
+            const checkbox = event.target.closest("[data-multi-value]");
+            if (!checkbox) return;
+
+            event.preventDefault();
+            toggleMultiSelectValue(field, checkbox.dataset.multiValue);
+          });
+
+          container.addEventListener("click", (event) => {
+            const addButton = event.target.closest("[data-multi-add]");
+            if (!addButton) return;
+
+            event.preventDefault();
+            addMultiSelectValue(field, multiSelectState[field].query.trim());
+            container.querySelector("[data-multi-search]").value = "";
+            multiSelectState[field].query = "";
+            renderMultiSelect(field);
+          });
+
+          renderMultiSelect(field);
+        });
+      }
+
+      function renderMultiSelect(field) {
+        const config = multiSelectConfig[field];
+        const stateForField = multiSelectState[field];
+        const container = document.querySelector(`[data-multi="${field}"]`);
+        if (!config || !stateForField || !container) return;
+
+        const selected = stateForField.selected;
+        const query = stateForField.query.trim().toLowerCase();
+        const visibleOptions = stateForField.options.filter((option) =>
+          !query || option.toLowerCase().includes(query)
+        );
+        const optionsNode = container.querySelector("[data-multi-options]");
+
+        optionsNode.innerHTML = visibleOptions.map((option) => `
+          <div class="multi-option">
+            <input type="checkbox" id="${field}-${option.replace(/[^a-z0-9]/gi, "-")}" data-multi-value="${escapeHtml(option)}" ${selected.includes(option) ? "checked" : ""}>
+            <label for="${field}-${option.replace(/[^a-z0-9]/gi, "-")}">${escapeHtml(option)}</label>
+          </div>
+        `).join("");
+
+        if (!visibleOptions.length) {
+          optionsNode.innerHTML = "<div class=\"multi-empty\">No matching options.</div>";
+        }
+
+        if (config.allowCustom && query && !stateForField.options.some((option) => option.toLowerCase() === query)) {
+          optionsNode.insertAdjacentHTML(
+            "beforeend",
+            `<button type="button" class="secondary inline-action" data-multi-add="${field}">Add "${escapeHtml(stateForField.query.trim())}"</button>`
+          );
+        }
+
+        syncMultiSelectHiddenField(field);
+      }
+
+      function setMultiSelectValues(field, values) {
+        const stateForField = multiSelectState[field];
+        if (!stateForField) return;
+
+        const cleaned = normalizeList(values);
+        for (const value of cleaned) {
+          if (!stateForField.options.includes(value)) {
+            stateForField.options.push(value);
+          }
+        }
+        stateForField.selected = cleaned;
+        renderMultiSelect(field);
+      }
+
+      function toggleMultiSelectValue(field, value) {
+        const stateForField = multiSelectState[field];
+        if (!stateForField) return;
+
+        if (stateForField.selected.includes(value)) {
+          stateForField.selected = stateForField.selected.filter((item) => item !== value);
+        } else {
+          stateForField.selected.push(value);
+        }
+        renderMultiSelect(field);
+      }
+
+      function addMultiSelectValue(field, value) {
+        const stateForField = multiSelectState[field];
+        if (!stateForField || !value) return;
+
+        if (!stateForField.options.includes(value)) {
+          stateForField.options.push(value);
+        }
+        if (!stateForField.selected.includes(value)) {
+          stateForField.selected.push(value);
+        }
+      }
+
+      function syncMultiSelectHiddenField(field) {
+        const input = document.getElementById(field);
+        if (!input || !multiSelectState[field]) return;
+        input.value = multiSelectState[field].selected.join(",");
+      }
+
+      function normalizeList(value) {
+        const values = Array.isArray(value) ? value : String(value || "").split(",");
+        return values.map((item) => String(item || "").trim()).filter(Boolean);
       }
 
       function clearForm() {
@@ -1657,6 +2025,11 @@
         document.getElementById("pollIntervalMinutes").value = "5";
         document.getElementById("pollStartTime").value = "00:00";
         document.getElementById("pollEndTime").value = "23:59";
+        setMultiSelectValues("alarmPriorityFilter", ["Critical", "High"]);
+        setMultiSelectValues("criticalPriorityFilter", ["Critical"]);
+        setMultiSelectValues("criticalAlarmKeywords", ["smoke", "fire", "freeze", "leak", "life safety"]);
+        setMultiSelectValues("highAlarmKeywords", ["offline", "communication", "comm", "compressor", "lockout", "fan", "airflow", "flow"]);
+        setMultiSelectValues("urgentAlarmCategories", []);
         document.getElementById("enabled").checked = true;
         document.getElementById("pollingEnabled").checked = false;
         document.querySelectorAll(".poll-day").forEach((checkbox) => {
@@ -1676,6 +2049,8 @@
         testResultsList.innerHTML = "";
         alarmStatus.textContent = "";
         alarmRows.innerHTML = "";
+        historyStatus.textContent = "";
+        historyRows.innerHTML = "";
       }
 
       function getSitePayload() {
@@ -1696,11 +2071,14 @@
           data.ewsUrl = `${data.baseUrl.replace(/\/+$/, "")}/EcoStruxure/DataExchange`;
         }
         data.alarmEndpointPath = data.alarmEndpointPath || "/alarms/active";
-        data.alarmPriorityFilter = (data.alarmPriorityFilter || "")
-          .split(",")
-          .map((priority) => priority.trim())
-          .filter(Boolean);
+        for (const field of Object.keys(multiSelectConfig)) {
+          data[field] = getMultiSelectValues(field);
+        }
         return data;
+      }
+
+      function getMultiSelectValues(field) {
+        return [...(multiSelectState[field]?.selected || [])];
       }
 
       function setSiteForm(site) {
@@ -1721,6 +2099,11 @@
         document.getElementById("pollIntervalMinutes").value = site.pollIntervalMinutes || 5;
         document.getElementById("pollStartTime").value = site.pollStartTime || "00:00";
         document.getElementById("pollEndTime").value = site.pollEndTime || "23:59";
+        setMultiSelectValues("alarmPriorityFilter", getSiteArray(site, "alarmPriorityFilter", ["Critical", "High"]));
+        setMultiSelectValues("criticalPriorityFilter", getSiteArray(site, "criticalPriorityFilter", ["Critical"]));
+        setMultiSelectValues("urgentAlarmCategories", getSiteArray(site, "urgentAlarmCategories", []));
+        setMultiSelectValues("criticalAlarmKeywords", getSiteArray(site, "criticalAlarmKeywords", ["smoke", "fire", "freeze", "leak", "life safety"]));
+        setMultiSelectValues("highAlarmKeywords", getSiteArray(site, "highAlarmKeywords", ["offline", "communication", "comm", "compressor", "lockout", "fan", "airflow", "flow"]));
         const pollDays = Array.isArray(site.pollDays) && site.pollDays.length
           ? site.pollDays.map(Number)
           : [0, 1, 2, 3, 4, 5, 6];
@@ -1731,6 +2114,10 @@
         renderSites();
         updateDashboard();
         loadAlarms().catch((error) => setStatus(alarmStatus, error.message, false));
+      }
+
+      function getSiteArray(site, field, fallback) {
+        return Object.prototype.hasOwnProperty.call(site, field) ? site[field] : fallback;
       }
 
       async function loadSites() {
@@ -1795,11 +2182,31 @@
           method,
           body: JSON.stringify(payload)
         });
-        state.selectedSiteId = site.siteId;
-        await loadSites();
-        setSiteForm(site);
-        setStatus(formStatus, "Site saved. Continue in the alarm workspace.", true);
+        const displaySite = {
+          ...site,
+          alarmPriorityFilter: payload.alarmPriorityFilter,
+          criticalPriorityFilter: payload.criticalPriorityFilter,
+          urgentAlarmCategories: payload.urgentAlarmCategories,
+          criticalAlarmKeywords: payload.criticalAlarmKeywords,
+          highAlarmKeywords: payload.highAlarmKeywords
+        };
+        state.selectedSiteId = displaySite.siteId;
+        await refreshWorkspaceData();
+        setSiteForm(displaySite);
+        const recalculation = site.policyRecalculation;
+        const message = recalculation
+          ? `Site saved. Recalculated ${recalculation.updated} active alarms; ${recalculation.attention} need attention.`
+          : "Site saved. Continue in the alarm workspace.";
+        setStatus(formStatus, message, true);
+        await refreshWorkspaceData();
         return site;
+      }
+
+      async function refreshWorkspaceData() {
+        await loadSites();
+        await loadAlarms();
+        await loadHistory();
+        updateDashboard();
       }
 
       async function deleteSite() {
@@ -1962,6 +2369,7 @@
         });
         setStatus(alarmStatus, `Fetched ${result.fetched} alarms by ${result.connector || "selected connector"}, saved ${result.saved}, closed ${result.returnedToNormal || 0}.`, true);
         await loadAlarms();
+        await loadHistory();
         await loadSites();
       }
 
@@ -1976,6 +2384,14 @@
         });
         setStatus(alarmStatus, `Refreshed by ${result.connector || "selected connector"}. Fetched ${result.fetched}, saved ${result.saved}, closed ${result.returnedToNormal || 0}.`, true);
         await loadAlarms();
+        await loadHistory();
+      }
+
+      function setAlarmView(view) {
+        state.alarmView = view;
+        document.getElementById("showAttentionAlarmsButton").classList.toggle("active", view === "attention");
+        document.getElementById("showAllAlarmsButton").classList.toggle("active", view === "all");
+        loadAlarms().catch((error) => setStatus(alarmStatus, error.message, false));
       }
 
       async function loadAlarms() {
@@ -1984,27 +2400,55 @@
           : "/api/alarms/active?limit=2000";
         const selected = await api(path);
         state.activeAlarms = selected;
+        const visibleAlarms = state.alarmView === "attention"
+          ? selected.filter((alarm) => alarm.needsAttention)
+          : selected;
 
         alarmRows.innerHTML = "";
         const connector = selected.find((alarm) => alarm.rawData?.connector)?.rawData?.connector;
+        const attentionCount = selected.filter((alarm) => alarm.needsAttention).length;
         alarmStatus.textContent = state.selectedSiteId
-          ? `${selected.length} active alarm${selected.length === 1 ? "" : "s"} for selected site${connector ? ` via ${connector}` : ""}`
-          : `${selected.length} active alarm${selected.length === 1 ? "" : "s"}`;
+          ? `${visibleAlarms.length} shown / ${selected.length} active alarm${selected.length === 1 ? "" : "s"} for selected site. ${attentionCount} need attention${connector ? ` via ${connector}` : ""}`
+          : `${visibleAlarms.length} shown / ${selected.length} active alarm${selected.length === 1 ? "" : "s"}. ${attentionCount} need attention`;
         updateDashboard();
 
-        if (!selected.length) {
+        if (!visibleAlarms.length) {
           const row = document.createElement("tr");
-          row.innerHTML = "<td colspan=\"8\"><div class=\"empty\">No active alarms found for the selected site.</div></td>";
+          row.innerHTML = "<td colspan=\"9\"><div class=\"empty\">No alarms match the current view.</div></td>";
           alarmRows.appendChild(row);
           return;
         }
 
-        for (const alarm of selected) {
+        for (const alarm of visibleAlarms) {
           appendAlarmRow(alarm);
         }
       }
 
-      function appendAlarmRow(alarm) {
+      async function loadHistory() {
+        const path = state.selectedSiteId
+          ? `/api/alarms/history?siteId=${encodeURIComponent(state.selectedSiteId)}&limit=2000`
+          : "/api/alarms/history?limit=2000";
+        const selected = await api(path);
+        state.historicalAlarms = selected;
+
+        historyRows.innerHTML = "";
+        historyStatus.textContent = state.selectedSiteId
+          ? `${selected.length} historical alarm${selected.length === 1 ? "" : "s"} for selected site`
+          : `${selected.length} historical alarm${selected.length === 1 ? "" : "s"}`;
+
+        if (!selected.length) {
+          const row = document.createElement("tr");
+          row.innerHTML = "<td colspan=\"9\"><div class=\"empty\">No historical alarms found for the selected site.</div></td>";
+          historyRows.appendChild(row);
+          return;
+        }
+
+        for (const alarm of selected) {
+          appendAlarmRow(alarm, historyRows);
+        }
+      }
+
+      function appendAlarmRow(alarm, targetRows = alarmRows) {
         try {
           const sourceName = alarm.rawData?.SourceName || alarm.alarmName || "";
           const rawId = typeof alarm.rawData?.ID === "string" ? alarm.rawData.ID : "";
@@ -2020,6 +2464,11 @@
           const alarmText = messageParts.detail || messageParts.title || "";
           const alarmCategory = alarm.rawData?.Type || alarm.rawData?.Category || alarm.category || "";
           const sequenceNumber = alarm.rawData?.SEQNO ? `Seq ${escapeHtml(alarm.rawData.SEQNO)}` : "";
+          const actionPriority = alarm.actionPriority || "Normal";
+          const actionClass = actionPriority.toLowerCase();
+          const attentionReason = Array.isArray(alarm.attentionReason)
+            ? alarm.attentionReason.join(" | ")
+            : "";
           const row = document.createElement("tr");
           row.innerHTML = `
             <td>
@@ -2037,6 +2486,10 @@
               <div class="alarm-meta">${alarm.equipmentName ? `Equipment: ${escapeHtml(alarm.equipmentName)}` : ""}</div>
             </td>
             <td>
+              <span class="priority-badge ${escapeHtml(actionClass)}">${escapeHtml(actionPriority)}</span>
+              <div class="alarm-meta">${escapeHtml(attentionReason)}</div>
+            </td>
+            <td>
               ${escapeHtml(alarm.priority || "")}
             </td>
             <td>${escapeHtml(alarm.state || "")}</td>
@@ -2049,7 +2502,7 @@
               <div class="alarm-meta">${escapeHtml(alarm.rawData?.connector || "")}</div>
             </td>
           `;
-          alarmRows.appendChild(row);
+          targetRows.appendChild(row);
           row.querySelector("[data-ai-alarm-id]").addEventListener("click", (event) => {
             event.stopPropagation();
             withBusy(event.currentTarget, () => analyzeAlarm(alarm._id));
@@ -2355,17 +2808,28 @@
       document.getElementById("fetchButton").addEventListener("click", () =>
         withBusy(document.getElementById("fetchButton"), fetchAlarms)
       );
+      document.getElementById("showAttentionAlarmsButton").addEventListener("click", () =>
+        setAlarmView("attention")
+      );
+      document.getElementById("showAllAlarmsButton").addEventListener("click", () =>
+        setAlarmView("all")
+      );
       document.getElementById("refreshAlarmsButton").addEventListener("click", () =>
         withBusy(document.getElementById("refreshAlarmsButton"), refreshAlarmsFromEbo)
+      );
+      document.getElementById("refreshHistoryButton").addEventListener("click", () =>
+        withBusy(document.getElementById("refreshHistoryButton"), loadHistory)
       );
       document.getElementById("analyzeSiteButton").addEventListener("click", () =>
         withBusy(document.getElementById("analyzeSiteButton"), analyzeSite)
       );
 
+      initializeMultiSelects();
       clearForm();
       loadAppStatus();
       loadSites()
         .then(loadAlarms)
+        .then(loadHistory)
         .catch((error) => setStatus(siteListStatus, error.message, false));
     </script>
   </body>

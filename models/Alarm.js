@@ -34,6 +34,16 @@ const alarmSchema = new mongoose.Schema(
 
     priority: { type: String },
     eboPriority: { type: Number },
+    actionPriority: {
+      type: String,
+      enum: ["Critical", "High", "Elevated", "Normal"],
+      default: "Normal"
+    },
+    needsAttention: { type: Boolean, default: false },
+    attentionReason: {
+      type: [String],
+      default: []
+    },
 
     state: {
       type: String,
@@ -71,6 +81,7 @@ alarmSchema.index(
   { unique: true }
 );
 alarmSchema.index({ clientName: 1, siteName: 1, priority: 1, state: 1 });
+alarmSchema.index({ siteId: 1, actionPriority: 1, needsAttention: 1, state: 1 });
 alarmSchema.index({ equipmentName: 1, alarmName: 1, occurredAt: -1 });
 
 module.exports = mongoose.model("Alarm", alarmSchema);
