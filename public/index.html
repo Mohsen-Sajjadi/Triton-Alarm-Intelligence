@@ -7,6 +7,12 @@
   <title>Triton Command Center</title>
   <link rel="stylesheet" href="/admin/app.css">
   <link rel="stylesheet" href="/admin/mobile.css">
+  <style>
+    .heading-with-help { display:inline-flex; align-items:center; gap:7px; }
+    .help-button { width:18px; height:18px; padding:0; border:1px solid #b9cbd6; border-radius:50%; background:#fff; color:#60798a; font:700 10px/16px Inter,"Segoe UI",sans-serif; cursor:pointer; }
+    .help-button:hover, .help-button:focus-visible { border-color:#087ea4; color:#087ea4; background:#edf8fb; outline:none; box-shadow:0 0 0 3px #087ea419; }
+    .help-popover { position:fixed; z-index:100; padding:12px 14px; border:1px solid #cbd9e1; border-radius:9px; background:#fff; color:#344e5e; box-shadow:0 12px 35px #102a4326; font-size:11px; line-height:1.5; }
+  </style>
 </head>
 <body>
   <div class="shell">

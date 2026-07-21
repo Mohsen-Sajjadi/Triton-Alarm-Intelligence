@@ -3,7 +3,35 @@ const $=(selector,root=document)=>root.querySelector(selector);
 const $$=(selector,root=document)=>[...root.querySelectorAll(selector)];
 const views={overview:["OPERATIONS","Command center"],alarms:["OPERATIONS","Alarm queue"],insights:["ANALYSIS","Alarm insights"],work:["SERVICE DELIVERY","Service work"],integrations:["CONFIGURATION","Integrations"]};
 
-document.addEventListener("DOMContentLoaded",()=>{bindEvents();loadEverything();});
+document.addEventListener("DOMContentLoaded",()=>{initializeHelp();bindEvents();loadEverything();});
+
+const helpContent={
+  "Command center":"A live summary of portfolio risk. Start here to see critical alarms, active service work, site connection health, and recent alarm activity.",
+  "Good day":"A live summary of portfolio risk. Start here to see critical alarms, active service work, site connection health, and recent alarm activity.",
+  "Needs attention now":"The highest-priority active alarms selected by each site’s attention policy. Select an alarm to review details and take action.",
+  "Site health":"Shows whether each integration is enabled, polling automatically, or needs a connection check.",
+  "Alarm activity":"Shows how many alarms occurred during each hour of the last 24 hours. Hover over a bar to see the count.",
+  "Alarm queue":"Search, filter, and review alarm records. Select any row to analyze the alarm, create service work, or mark it returned to normal.",
+  "Alarm insights":"Highlights repeat alarms, noisy assets, and equipment with the lowest calculated health score.",
+  "Most frequent alarms":"Ranks the alarms that occurred most often during the selected reporting period.",
+  "Chattering alarms":"Finds alarms that repeated at least three times and may need tuning or root-cause investigation.",
+  "Lowest equipment health":"Ranks equipment using alarm frequency and severity. Lower scores indicate greater operational risk.",
+  "Service work":"Tracks work created from alarms through Open, In Progress, Resolved, and Closed stages.",
+  "Integrations":"Configure EBO and SmartConnector sites, test connectivity, manage polling, and run alarm synchronization."
+};
+
+function initializeHelp(){
+  const popover=document.createElement("div");popover.id="helpPopover";popover.className="help-popover hidden";popover.setAttribute("role","tooltip");document.body.appendChild(popover);
+  $$("h2, .card-head h3").forEach(heading=>{const text=heading.textContent.trim(),help=helpContent[text];if(!help)return;const wrapper=document.createElement("span");wrapper.className="heading-with-help";heading.parentNode.insertBefore(wrapper,heading);wrapper.appendChild(heading);const button=document.createElement("button");button.type="button";button.className="help-button";button.textContent="?";button.setAttribute("aria-label",`Help for ${text}`);button.dataset.help=help;wrapper.appendChild(button);});
+  document.addEventListener("click",event=>{const button=event.target.closest(".help-button");if(button){event.stopPropagation();showHelp(button,popover);return;}popover.classList.add("hidden");});
+  document.addEventListener("keydown",event=>{if(event.key==="Escape")popover.classList.add("hidden");});
+  window.addEventListener("resize",()=>popover.classList.add("hidden"));
+}
+
+function showHelp(button,popover){
+  if(popover.dataset.owner===button.getAttribute("aria-label")&&!popover.classList.contains("hidden")){popover.classList.add("hidden");return;}
+  popover.textContent=button.dataset.help;popover.dataset.owner=button.getAttribute("aria-label");popover.classList.remove("hidden");const rect=button.getBoundingClientRect(),width=Math.min(310,window.innerWidth-24);popover.style.width=`${width}px`;let left=Math.min(rect.left,window.innerWidth-width-12);left=Math.max(12,left);popover.style.left=`${left}px`;popover.style.top=`${Math.min(rect.bottom+8,window.innerHeight-popover.offsetHeight-12)}px`;
+}
 
 function bindEvents(){
   $$("[data-view]").forEach(b=>b.addEventListener("click",()=>openView(b.dataset.view)));
