@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102a43">
+  <title>Triton Command Center</title>
+  <link rel="stylesheet" href="/admin/app.css">
+  <link rel="stylesheet" href="/admin/mobile.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="Triton Command Center">
+        <span class="brand-mark">T</span><span><strong>Triton</strong><small>Alarm Intelligence</small></span>
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <button data-view="overview" class="active"><span class="nav-icon">⌂</span>Command center</button>
+        <button data-view="alarms"><span class="nav-icon">!</span>Alarm queue <span class="nav-count" id="navAlarmCount">0</span></button>
+        <button data-view="insights"><span class="nav-icon">⌁</span>Insights</button>
+        <button data-view="work"><span class="nav-icon">✓</span>Service work <span class="nav-count" id="navIssueCount">0</span></button>
+        <button data-view="integrations"><span class="nav-icon">↔</span>Integrations</button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="system-state"><span class="status-dot" id="bridgeDot"></span><span><strong id="bridgeLabel">Checking bridge</strong><small id="bridgeTime">Connecting…</small></span></div>
+        <button class="icon-button" id="collapseNav" aria-label="Collapse navigation">‹</button>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div><p class="eyebrow" id="pageEyebrow">OPERATIONS</p><h1 id="pageTitle">Command center</h1></div>
+        <div class="top-actions">
+          <label class="site-picker"><span>Site</span><select id="globalSite"><option value="">All sites</option></select></label>
+          <button class="button ghost" id="refreshButton">↻ Refresh</button>
+          <button class="button primary" id="syncButton">Sync alarms</button>
+        </div>
+      </header>
+
+      <div class="notice hidden" id="notice" role="status"></div>
+
+      <section class="view active" id="view-overview">
+        <div class="hero-row">
+          <div><h2 id="greeting">Good day</h2><p>Here is what needs attention across your connected portfolio.</p></div>
+          <p class="updated">Last updated <strong id="lastUpdated">—</strong></p>
+        </div>
+        <div class="metrics">
+          <button class="metric critical" data-jump="alarms" data-filter="Critical"><span>Critical</span><strong id="metricCritical">0</strong><small>Immediate response</small></button>
+          <button class="metric high" data-jump="alarms" data-filter="High"><span>High priority</span><strong id="metricHigh">0</strong><small>Needs review</small></button>
+          <button class="metric"><span>Active alarms</span><strong id="metricActive">0</strong><small id="activeTrend">Across all sites</small></button>
+          <button class="metric"><span>Open service work</span><strong id="metricIssues">0</strong><small id="issueTrend">Awaiting resolution</small></button>
+        </div>
+        <div class="overview-grid">
+          <article class="card attention-card">
+            <div class="card-head"><div><p class="eyebrow">PRIORITY QUEUE</p><h3>Needs attention now</h3></div><button class="text-button" data-jump="alarms">View all →</button></div>
+            <div id="attentionList" class="attention-list"><div class="empty">Loading active alarms…</div></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">PORTFOLIO</p><h3>Site health</h3></div><span class="legend"><i></i> Live connection</span></div>
+            <div id="siteHealth" class="site-health"><div class="empty">Loading sites…</div></div>
+          </article>
+          <article class="card span-2">
+            <div class="card-head"><div><p class="eyebrow">24-HOUR PULSE</p><h3>Alarm activity</h3></div><span class="muted">Occurrence volume by hour</span></div>
+            <div class="activity-chart" id="activityChart" aria-label="Alarm activity chart"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-alarms">
+        <div class="section-intro"><div><h2>Alarm queue</h2><p>Review and act on active conditions, ordered by operational priority.</p></div></div>
+        <div class="filterbar">
+          <label class="search"><span>⌕</span><input id="alarmSearch" placeholder="Search alarm, equipment, site…"></label>
+          <div class="chips" id="priorityChips">
+            <button class="chip active" data-priority="">All <span id="chipAll">0</span></button>
+            <button class="chip" data-priority="Critical">Critical <span id="chipCritical">0</span></button>
+            <button class="chip" data-priority="High">High <span id="chipHigh">0</span></button>
+            <button class="chip" data-priority="Elevated">Elevated <span id="chipElevated">0</span></button>
+          </div>
+          <select id="alarmState" aria-label="Alarm status"><option value="active">Active only</option><option value="attention">Needs attention</option><option value="history">Returned to normal</option><option value="all">All records</option></select>
+        </div>
+        <div class="table-card">
+          <table><thead><tr><th>Priority</th><th>Alarm & equipment</th><th>Site</th><th>State</th><th>Occurred</th><th>Service</th><th></th></tr></thead><tbody id="alarmRows"></tbody></table>
+          <div class="empty hidden" id="alarmEmpty">No alarms match these filters.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-insights">
+        <div class="section-intro"><div><h2>Alarm insights</h2><p>Find recurring problems and equipment creating the most operational noise.</p></div><select id="insightRange"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select></div>
+        <div class="insight-grid">
+          <article class="card span-2"><div class="card-head"><div><p class="eyebrow">BAD ACTORS</p><h3>Most frequent alarms</h3></div></div><div id="topAlarms" class="ranking"></div></article>
+          <article class="card"><div class="card-head"><div><p class="eyebrow">REPETITION</p><h3>Chattering alarms</h3></div></div><div id="repeatAlarms" class="ranking"></div></article>
+          <article class="card"><div class="card-head"><div><p class="eyebrow">ASSET RISK</p><h3>Lowest equipment health</h3></div></div><div id="equipmentHealth" class="ranking"></div></article>
+        </div>
+      </section>
+
+      <section class="view" id="view-work">
+        <div class="section-intro"><div><h2>Service work</h2><p>Track alarm-driven work from detection through resolution.</p></div></div>
+        <div class="kanban" id="workBoard"></div>
+      </section>
+
+      <section class="view" id="view-integrations">
+        <div class="section-intro"><div><h2>Integrations</h2><p>Manage EBO connections and polling without cluttering daily alarm operations.</p></div><button class="button primary" id="newSiteButton">+ Add site</button></div>
+        <div class="integration-summary"><div><span>Connected sites</span><strong id="connectedSites">0</strong></div><div><span>Polling enabled</span><strong id="pollingSites">0</strong></div><div><span>Connection issues</span><strong id="failedSites">0</strong></div></div>
+        <div class="integration-list" id="integrationList"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-backdrop hidden" id="drawerBackdrop"></div>
+  <aside class="drawer" id="alarmDrawer" aria-hidden="true">
+    <div class="drawer-head"><div><p class="eyebrow">ALARM DETAILS</p><h2 id="drawerTitle">Alarm</h2></div><button class="icon-button" id="closeDrawer" aria-label="Close">×</button></div>
+    <div id="drawerBody"></div>
+  </aside>
+
+  <dialog id="siteDialog">
+    <form method="dialog" id="siteForm">
+      <div class="dialog-head"><div><p class="eyebrow">INTEGRATION SETUP</p><h2 id="siteDialogTitle">Add a site</h2></div><button class="icon-button" type="button" data-close-site-dialog aria-label="Close">×</button></div>
+      <div class="form-section"><h3>Site identity</h3><div class="form-grid"><label>Client<input name="clientName" required></label><label>Site name<input name="siteName" required></label><label>Site ID<input name="siteId" required placeholder="client-building"></label><label>Connection type<select name="connectionType"><option>SmartConnectorREST</option><option>EBO EWS SOAP</option><option>EBO WebStation</option><option>Enterprise Server</option><option>AS-P Direct</option></select></label></div></div>
+      <div class="form-section"><h3>Connection</h3><div class="form-grid"><label class="wide">Gateway URL<input type="url" name="baseUrl" required placeholder="https://gateway.example.com"></label><label class="wide">EWS URL <small>Optional</small><input type="url" name="ewsUrl"></label><label>Alarm endpoint<input name="alarmEndpointPath" value="/alarms/active"></label><label>Username<input name="username" autocomplete="username"></label><label>Password<input type="password" name="password" autocomplete="current-password"></label><label>Poll every (minutes)<input type="number" name="pollIntervalMinutes" min="1" value="5"></label></div></div>
+      <div class="form-section"><h3>Operations</h3><div class="toggle-row"><label><input type="checkbox" name="enabled" checked> Integration enabled</label><label><input type="checkbox" name="pollingEnabled"> Poll automatically</label></div><label class="wide">Attention priorities<input name="alarmPriorityFilter" value="Critical, High" placeholder="Critical, High"></label><label class="wide">Notes<textarea name="notes" rows="2"></textarea></label></div>
+      <div class="dialog-actions"><button class="button danger hidden" type="button" id="deleteSiteButton">Delete site</button><span></span><button class="button ghost" type="button" data-close-site-dialog>Cancel</button><button class="button primary" type="submit" id="saveSiteButton">Save integration</button></div>
+    </form>
+  </dialog>
+
+  <script src="/admin/app.js"></script>
+</body>
+</html>

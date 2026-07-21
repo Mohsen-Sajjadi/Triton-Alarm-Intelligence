@@ -1,0 +1,15 @@
+@media (max-width: 680px) {
+  html, body, .shell, main { width: 100vw !important; max-width: 100vw; overflow-x: hidden; }
+  .topbar { justify-content: flex-end; }
+  .top-actions .primary { display: none; }
+  .site-picker select { min-width: 150px; }
+  .hero-row { align-items: flex-start; }
+  .hero-row > div { min-width: 0; }
+  .hero-row h2 { font-size: 22px; }
+  .hero-row p { max-width: 330px; }
+  .updated { display: none; }
+  .view { width: 100vw; max-width: 100vw; }
+  .metrics { width: calc(100vw - 28px); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric { min-width: 0; }
+  .drawer { max-width: 100vw; }
+}
