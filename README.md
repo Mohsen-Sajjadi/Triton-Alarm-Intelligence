@@ -55,8 +55,8 @@ For production, move site credentials into encrypted secrets instead of storing 
 
 ## Run
 
-Double-click `Start-Triton-Alarm-Bridge.bat` to start the bridge on Windows.
-Double-click `Stop-Triton-Alarm-Bridge.bat` to stop the bridge and release port `3010`.
+Double-click `Start-Triton-Alarm-Intelligence.bat` to start the bridge on Windows.
+Double-click `Stop-Triton-Alarm-Intelligence.bat` to stop the bridge and release port `3010`.
 
 The launcher opens a terminal, installs dependencies if `node_modules` is missing, and runs:
 
