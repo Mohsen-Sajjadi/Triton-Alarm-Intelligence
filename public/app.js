@@ -95,7 +95,7 @@ function renderOverview(){
 
 function renderAlarmTable(){
   const source=state.alarmMode==="active"?state.alarms:state.allAlarms;const search=$("#alarmSearch").value.trim().toLowerCase();
-  const scoped=source.filter(a=>(!state.selectedSite||a.siteId===state.selectedSite)&&(!state.priority||(a.actionPriority||a.priority)===state.priority)&&(!search||[a.alarmName,a.equipmentName,a.siteName,a.clientName,a.message].join(" ").toLowerCase().includes(search))).sort(prioritySort);
+  const scoped=source.filter(a=>(!state.selectedSite||a.siteId===state.selectedSite)&&(!state.priority||(a.actionPriority||a.priority)===state.priority)&&(!search||[a.alarmName,a.equipmentName,a.siteName,a.clientName,a.message].join(" ").toLowerCase().includes(search))).sort(occurredSort);
   const counts=scopedAlarms().reduce((o,a)=>{const p=a.actionPriority||a.priority;o[p]=(o[p]||0)+1;return o;},{});$("#chipAll").textContent=scopedAlarms().length;$("#chipCritical").textContent=counts.Critical||0;$("#chipHigh").textContent=counts.High||0;$("#chipElevated").textContent=counts.Elevated||0;
   $("#alarmRows").innerHTML=scoped.map(a=>`<tr data-id="${esc(a._id)}"><td><span class="badge ${esc(a.actionPriority||a.priority)}">${esc(a.actionPriority||a.priority||"Normal")}</span></td><td class="alarm-cell"><strong>${esc(a.alarmName)}</strong><small>${esc(a.equipmentName||"Unknown equipment")} · ${esc(a.message||"")}</small></td><td>${esc(a.siteName)}</td><td><span class="badge ${esc(a.state)}">${esc(prettyState(a.state))}</span></td><td>${formatRelative(a.occurredAt)}</td><td>${a.serviceIssueCreated?`<span class="service-link">${esc(a.serviceIssueStatus||"Created")}</span>`:"—"}</td><td>›</td></tr>`).join("");
   $("#alarmEmpty").classList.toggle("hidden",scoped.length>0);$$("tr[data-id]",$("#alarmRows")).forEach(row=>row.addEventListener("click",()=>openAlarm(row.dataset.id)));
@@ -132,6 +132,7 @@ async function saveSite(e){e.preventDefault();const form=e.currentTarget,data=Ob
 async function deleteSite(){if(!state.editingSite||!confirm(`Delete ${state.editingSite.siteName}? Stored alarm history will remain.`))return;try{await request(`/api/sites/${encodeURIComponent(state.editingSite.siteId)}`,{method:"DELETE"});$("#siteDialog").close();state.sites=await request("/api/sites");if(state.selectedSite===state.editingSite.siteId)state.selectedSite="";populateSites();renderAll();notify("Site integration deleted. Alarm history was preserved.");}catch(e){notify(e.message,true);}}
 
 function prioritySort(a,b){const rank={Critical:0,High:1,Elevated:2,Normal:3};return (rank[a.actionPriority||a.priority]??4)-(rank[b.actionPriority||b.priority]??4)||new Date(b.occurredAt)-new Date(a.occurredAt);}
+function occurredSort(a,b){return new Date(b.occurredAt)-new Date(a.occurredAt)||prioritySort(a,b);}
 function prettyState(v){return v==="ReturnedToNormal"?"Returned to normal":v||"Unknown";}
 function formatRelative(value){if(!value)return"—";const ms=Date.now()-new Date(value);if(ms<0)return"just now";const m=Math.floor(ms/60000);if(m<1)return"just now";if(m<60)return`${m}m ago`;const h=Math.floor(m/60);if(h<24)return`${h}h ago`;const d=Math.floor(h/24);return d<30?`${d}d ago`:new Date(value).toLocaleDateString();}
 function formatDate(value){return value?new Date(value).toLocaleString([], {dateStyle:"medium",timeStyle:"short"}):"—";}

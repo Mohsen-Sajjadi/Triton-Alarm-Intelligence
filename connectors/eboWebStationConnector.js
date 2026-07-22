@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const https = require("https");
+const net = require("net");
 const axios = require("axios");
 
 const insecureTestAgent = new https.Agent({
@@ -122,6 +123,12 @@ async function createWebStationSession(site) {
     throw new Error("WebStation username and password are required");
   }
 
+  // Fail quickly with a useful routing diagnostic. Axios otherwise waits for
+  // its full request timeout and reports a generic ETIMEDOUT, which can look
+  // like a WebStation credential or API problem even though HTTPS was never
+  // reached.
+  await assertWebStationReachable(baseUrl, site.connectionTimeoutMs);
+
   const session = {
     baseUrl,
     csrfToken: "",
@@ -220,6 +227,39 @@ async function createWebStationSession(site) {
 
   session.csrfToken = loginResponse.data.token;
   return session;
+}
+
+async function assertWebStationReachable(baseUrl, configuredTimeout) {
+  const parsedUrl = new URL(baseUrl);
+  const port = Number(parsedUrl.port || (parsedUrl.protocol === "http:" ? 80 : 443));
+  const timeout = Math.max(Number(configuredTimeout || 5000), 1000);
+
+  await new Promise((resolve, reject) => {
+    const socket = net.createConnection({ host: parsedUrl.hostname, port });
+
+    const fail = (code, message) => {
+      socket.destroy();
+      const error = new Error(message);
+      error.code = code;
+      reject(error);
+    };
+
+    socket.setTimeout(timeout);
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve();
+    });
+    socket.once("timeout", () => {
+      fail(
+        "ETIMEDOUT",
+        `Cannot reach WebStation at ${parsedUrl.hostname}:${port}. The Brink/Neeve site tunnel is not routing this address to Node.js.`
+      );
+    });
+    socket.once("error", (error) => {
+      socket.destroy();
+      reject(error);
+    });
+  });
 }
 
 async function getLoginPage(session) {
@@ -425,7 +465,11 @@ function buildWebStationConnectorError(error, site) {
       : error.response?.data;
 
   const connectorError = new Error(
-    statusCode ? `WebStation request failed with status code ${statusCode}` : error.message
+    statusCode
+      ? `WebStation request failed with status code ${statusCode}`
+      : error.code === "ETIMEDOUT" || error.code === "ECONNABORTED"
+        ? `Cannot reach ${site.baseUrl || site.serverUrl}. Confirm the Brink/Neeve session is logged in and the selected site tunnel includes this address.`
+        : error.message
   );
   connectorError.statusCode = statusCode;
   connectorError.diagnostic = {
